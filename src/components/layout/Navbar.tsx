@@ -1,6 +1,5 @@
 import { Dumbbell } from "lucide-react";
 import { Link } from "react-router-dom";
-import { Button } from "../ui/button";
 
 export default function Navbar() {
     return (
@@ -15,9 +14,6 @@ export default function Navbar() {
 
                 <nav>
                     <>
-                    <Link to="/auth/sign-in">
-                        <Button> Sign In </Button>
-                    </Link>
                     </>
                 </nav>
             </div>
