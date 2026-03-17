@@ -26,7 +26,10 @@ export const api = {
         profile: ProfileInput
     ) => {
 
-        post("/profile", {userId, ...profile})
+        return post("/profile", {userId, ...profile})
 
-    }   
+    },   
+    generatePlan: (userId: string) => {
+        return post("/plan/generate", {userId})
+    }
 };

@@ -5,7 +5,7 @@ import { TrainingPlan, UserProfile } from "../../types";
 dotenv.config();
 
 export async function generateTrainingPlan(
-    profile: UserProfile | Record<string, any,
+    profile: UserProfile | Record<string, unknown>
 ) : Promise<Omit<TrainingPlan, "id" | "userId" | "version" | "createdAt">> {
 
     // Normalize Profile Data
@@ -28,6 +28,7 @@ export async function generateTrainingPlan(
     const openai = new OpenAI({
         apiKey,
         baseURL: "https://openrouter.ai/api/v1",
+        timeout: 60000,
         defaultHeaders: {
             "HTTP-Referer": process.env.BASE_URL || "http://localhost:3001",
             "X-Title": "GymAI Planner"
@@ -40,7 +41,7 @@ export async function generateTrainingPlan(
     try {
         // Call OpenRouter API
         const completion = await openai.chat.completions.create({
-            model: "openai/gpt-oss-120b:free",
+            model: "arcee-ai/trinity-large-preview:free",
             messages: [
                 {
                     role: "system",

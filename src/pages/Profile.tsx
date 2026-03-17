@@ -10,7 +10,7 @@ export default function Profile() {
         return <Navigate to="/auth/sign-in" replace />
     }
 
-    if (plan) {
+    if (!plan) {
         return <Navigate to="/onboarding" replace />
     }
     
