@@ -6,7 +6,6 @@ import { Card } from "@/components/ui/card";
 import { PlanDisplay } from "@/components/plan/PlanDisplay";
 
 export default function Profile() {
-
     const {user, plan, isLoading, generatePlan} = useAuth();
 
     if (!user && !isLoading) {
@@ -15,6 +14,10 @@ export default function Profile() {
 
     if (!isLoading && !plan) {
         return <Navigate to="/onboarding" replace />
+    }
+
+    if (!plan) {
+        return null;
     }
 
     const formateDate = (dateString: string) => {
@@ -34,7 +37,7 @@ export default function Profile() {
                     <div>
                         <h1 className="text-3xl font-bold mb-1">Your Training Plan</h1>
                         <p className="text-muted">
-                            Version {plan?.version} • Created {formateDate(plan?.createdAt || "")}
+                            Version {plan.version} • Created {formateDate(plan.createdAt)}
                         </p>
                     </div>
 
@@ -51,7 +54,7 @@ export default function Profile() {
                         </div>
                         <div>
                             <p className="text-xs text-muted">Primary Goal</p>
-                            <p className="text-sm font-medium">{plan?.overview.goal}</p>
+                            <p className="text-sm font-medium">{plan.overview.goal}</p>
                         </div>
                     </Card>
 
@@ -61,7 +64,7 @@ export default function Profile() {
                         </div>
                         <div>
                             <p className="text-xs text-muted">Training Frequency</p>
-                            <p className="text-sm font-medium">{plan?.overview.frequency}</p>
+                            <p className="text-sm font-medium">{plan.overview.frequency}</p>
                         </div>
                     </Card>
 
@@ -71,7 +74,7 @@ export default function Profile() {
                         </div>
                         <div>
                             <p className="text-xs text-muted">Split</p>
-                            <p className="text-sm font-medium">{plan?.overview.split}</p>
+                            <p className="text-sm font-medium">{plan.overview.split}</p>
                         </div>
                     </Card>
 
@@ -81,7 +84,7 @@ export default function Profile() {
                         </div>
                         <div>
                             <p className="text-xs text-muted">Version</p>
-                            <p className="text-sm font-medium">{plan?.version}</p>
+                            <p className="text-sm font-medium">{plan.version}</p>
                         </div>
                     </Card>
                 </div>
@@ -89,16 +92,16 @@ export default function Profile() {
                 { /* Plan notes */ }
                 <Card variant="bordered" className="mb-8">
                     <h2 className="font-semibold text-lg mb-2">Plan Notes</h2>
-                    <p className="text-muted text-sm leading-relaxed">{plan?.overview.notes}</p>
+                    <p className="text-muted text-sm leading-relaxed">{plan.overview.notes}</p>
                 </Card>
 
                 { /* Weekly Schedule */ }
                 <h2 className="font-semibold text-xl mb-4">Weekly Schedule</h2>
-                <PlanDisplay weeklySchedule={plan?.weeklySchedule} />
+                <PlanDisplay weeklySchedule={plan.weeklySchedule} />
 
                 <Card variant="bordered" className="mb-8">
                     <h2 className="font-semibold text-lg mb-2">Progression Strategy</h2>
-                    <p className="text-muted text-sm leading-relaxed">{plan?.progression}</p>
+                    <p className="text-muted text-sm leading-relaxed">{plan.progression}</p>
                 </Card>
 
             </div>

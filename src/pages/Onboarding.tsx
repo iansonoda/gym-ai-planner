@@ -6,7 +6,6 @@ import { useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Loader2 } from "lucide-react";
-import { api } from "@/lib/api";
 import { useNavigate } from "react-router-dom";
 
 
@@ -25,18 +24,18 @@ const experience = [
 ];
 
 const daysOptions = [
-    {value: 2, label: "2 Days per week"},
-    {value: 3, label: "3 Days per week"},
-    {value: 4, label: "4 Days per week"},
-    {value: 5, label: "5 Days per week"},
-    {value: 6, label: "6 Days per week"},
+    {value: "2", label: "2 Days per week"},
+    {value: "3", label: "3 Days per week"},
+    {value: "4", label: "4 Days per week"},
+    {value: "5", label: "5 Days per week"},
+    {value: "6", label: "6 Days per week"},
 ]
 
 const sessionOptions = [
-    {value: 30, label: "30 minutes"},
-    {value: 45, label: "45 minutes"},
-    {value: 60, label: "60 minutes"},
-    {value: 90, label: "90 minutes"},
+    {value: "30", label: "30 minutes"},
+    {value: "45", label: "45 minutes"},
+    {value: "60", label: "60 minutes"},
+    {value: "90", label: "90 minutes"},
 ]
 
 const equipmentOptions = [
@@ -58,8 +57,8 @@ export default function Onboarding() {
     const [formData, setFormData] = useState({
         goal: "bulk",
         experience: "beginner",
-        daysPerWeek: 2,
-        sessionDuration: 30,
+        daysPerWeek: "2",
+        sessionDuration: "30",
         equipment: "full_gym",
         injuries: "",
         preferredSplit: "upper_lower",
@@ -173,6 +172,7 @@ export default function Onboarding() {
                                     Generate My Plan <ArrowRight className="w-4 h-4"/>
                                 </Button>
                             </div>
+                            {error && <p className="text-sm text-red-500">{error}</p>}
                         </form>
                     </Card> : (
                         <Card variant="bordered" className="text-center py-16">

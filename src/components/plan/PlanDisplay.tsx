@@ -84,7 +84,7 @@ function DayCard({ schedule }: { schedule: DaySchedule }) {
 }
 
 interface PlanDisplayProps {
-    weeklySchedule: DaySchedule;
+    weeklySchedule: DaySchedule[];
 }
 
 export function PlanDisplay({ weeklySchedule }: PlanDisplayProps) {
