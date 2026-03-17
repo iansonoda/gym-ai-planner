@@ -7,11 +7,13 @@ A modern, AI-powered workout companion designed to help you reach your fitness g
 ## ✨ Features
 
 - **🎯 Personalized Onboarding**: A comprehensive onboarding flow to understand your goals, experience level (Beginner to Advanced), and physical constraints.
-- **🤖 AI-Driven Plan Generation**: Uses advanced AI to craft custom training splits (Full Body, PPL, Upper/Lower, etc.) tailored specifically to your needs.
+- **🤖 AI-Driven Plan Generation**: Uses OpenRouter (AI) to craft custom training splits (Full Body, PPL, Upper/Lower, etc.) tailored specifically to your needs.
+- **📊 Detailed Workout Views**: Beautifully rendered exercise tables including sets, reps, rest periods, and RPE (Rate of Perceived Exertion).
+- **📈 Progression Strategies**: Custom-tailored advice on how to progress your lifts over time based on your goals.
 - **🛠 Equipment Awareness**: Specify available equipment (Commercial Gym, Home Gym, Bodyweight only) to ensure your plan is actionable.
 - **🌱 Injuries & Preferences**: Accounts for past injuries and preferred training styles to keep you safe and motivated.
 - **🔄 Plan Versioning**: Automatically tracks and stores different versions of your training plans as you evolve and regenerate them.
-- **🎨 Modern, Responsive UI**: Built with a sleek, premium design system using Tailwind CSS 4 and Shadcn UI.
+- **🎨 Modern UI**: Built with a sleek, premium design system using Tailwind CSS 4 and Shadcn UI.
 
 ---
 
@@ -27,9 +29,10 @@ A modern, AI-powered workout companion designed to help you reach your fitness g
 
 ### Backend
 - **Runtime**: [Node.js](https://nodejs.org/)
-- **Framework**: [Express.js](https://expressjs.com/)
-- **ORM**: [Prisma](https://www.prisma.io/)
+- **Framework**: [Express.js 5](https://expressjs.com/)
+- **ORM**: [Prisma 7](https://www.prisma.io/)
 - **Database**: [PostgreSQL (Neon)](https://neon.tech/)
+- **AI Integration**: [OpenRouter API](https://openrouter.ai/)
 - **Language**: [TypeScript](https://www.typescriptlang.org/)
 
 ---
@@ -44,22 +47,22 @@ A modern, AI-powered workout companion designed to help you reach your fitness g
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/your-username/gym-ai-planner.git
+   git clone https://github.com/iansonoda/gym-ai-planner.git
    cd gym-ai-planner
    ```
 
-2. **Setup the Server**:
+2. **Setup the Backend**:
    ```bash
    cd server
    npm install
    ```
 
-3. **Configure Environment Variables**:
+3. **Configure Server Environment**:
    Create a `.env` file in the `server` directory:
    ```env
-   DATABASE_URL="your-postgresql-connection-string"
-   AI_API_KEY="your-ai-provider-api-key"
-   PORT=3000
+   DATABASE_URL="postgresql://user:password@host/dbname?sslmode=require"
+   OPEN_ROUTER_KEY="your-openrouter-key"
+   PORT=3001
    ```
 
 4. **Initialize Database**:
@@ -74,8 +77,14 @@ A modern, AI-powered workout companion designed to help you reach your fitness g
    npm install
    ```
 
-6. **Run the Application**:
-   - Start the backend: `cd server && npm run dev`
+6. **Configure Frontend Environment**:
+   Create a `.env` file in the root directory:
+   ```env
+   VITE_API_URL="http://localhost:3001"
+   ```
+
+7. **Run the Application**:
+   - Start the backend: `cd server && npm run dev:server`
    - Start the frontend: `npm run dev`
 
 ---
@@ -84,16 +93,17 @@ A modern, AI-powered workout companion designed to help you reach your fitness g
 
 ```text
 ├── src/                # Frontend React application
-│   ├── components/     # Reusable UI components
-│   ├── pages/          # Application views (Onboarding, Home, Profile)
-│   ├── lib/            # Utility functions
-│   └── assets/         # Static assets
-├── server/             # Express.js backend
-│   ├── prisma/         # Database schema and migrations
-│   ├── src/            # Backend logic and routes
+│   ├── components/     # Reusable UI components (PlanDisplay, UI primitives)
+│   ├── pages/          # Application views (Onboarding, Profile, Auth)
+│   ├── context/        # Auth and Global State
+│   ├── lib/            # API client and helper functions
 │   └── types/          # Shared type definitions
+├── server/             # Express.js backend
+│   ├── prisma/         # Database schema and client generation
+│   ├── src/            # Backend logic, routes, and AI generation
+│   └── types/          # Backend-specific types
 ├── public/             # Static public assets
-└── package.json        # Project dependencies and scripts
+└── package.json        # Frontend dependencies and scripts
 ```
 
 ---
