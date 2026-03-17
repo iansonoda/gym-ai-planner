@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { normalizeOnboardingProfile } from "@/lib/onboarding";
 
 
 const goalOptions = [
@@ -74,15 +75,7 @@ export default function Onboarding() {
     async function handleQuestionnaire(e: React.SubmitEvent) {
         e.preventDefault();
 
-        const profile = {
-            goal: formData.goal,
-            experience: formData.experience,
-            daysPerWeek: Number(formData.daysPerWeek),
-            sessionDuration: Number(formData.sessionDuration),
-            equipment: formData.equipment,
-            injuries: formData.injuries,
-            preferredSplit: formData.preferredSplit,
-        };
+        const profile = normalizeOnboardingProfile(formData);
         try {
             await saveProfile(profile);
             setIsGenerating(true);

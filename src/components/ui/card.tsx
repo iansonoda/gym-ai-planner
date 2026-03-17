@@ -1,4 +1,7 @@
+import React from "react";
 import { type HTMLAttributes, forwardRef } from 'react';
+
+void React;
 
 interface CardProps extends HTMLAttributes<HTMLDivElement> {
   variant?: 'default' | 'bordered';

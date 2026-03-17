@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node --import ./node_modules/tsx/dist/loader.mjs --test src/**/*.test.ts",
     "dev:server": "tsx watch src/index.ts"
   },
   "keywords": [],

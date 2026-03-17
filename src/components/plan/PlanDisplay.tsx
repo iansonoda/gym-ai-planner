@@ -1,6 +1,9 @@
+import React from "react";
 import { Dumbbell, Info } from "lucide-react";
 import type { DaySchedule, Exercise } from "../../types";
 import { Card } from "../ui/card";
+
+void React;
 
 function ExerciseRow({ exercise, index }: { exercise: Exercise, index: number }) {
     return (
