@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { NextFunction, Request, Response } from "express";
-import { requireAuth } from "./auth";
+import { requireAuth, resolveJwksUrl } from "./auth";
 
 function createMockResponse() {
     return {
@@ -37,4 +37,19 @@ test("requireAuth rejects requests without an authorization header", async () =>
     assert.equal(nextCalled, false);
     assert.equal(res.statusCode, 401);
     assert.deepEqual(res.jsonBody, { error: "Authentication required" });
+});
+
+test("resolveJwksUrl uses Neon well-known JWKS path", () => {
+    const jwksUrl = resolveJwksUrl("https://example.neon.tech/neondb/auth");
+
+    assert.equal(jwksUrl?.toString(), "https://example.neon.tech/neondb/auth/.well-known/jwks.json");
+});
+
+test("resolveJwksUrl preserves an explicit JWKS override", () => {
+    const jwksUrl = resolveJwksUrl(
+        "https://example.neon.tech/neondb/auth",
+        "https://auth.example.com/custom/jwks.json"
+    );
+
+    assert.equal(jwksUrl?.toString(), "https://auth.example.com/custom/jwks.json");
 });

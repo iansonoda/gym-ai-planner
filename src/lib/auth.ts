@@ -5,9 +5,12 @@ export const authClient = createAuthClient(
 );
 
 export async function getAuthToken() {
-    const clientWithToken = authClient as ReturnType<typeof createAuthClient> & {
-        getJWTToken?: () => Promise<string | null>;
-    };
+    const sessionResult = await authClient.getSession();
+    const sessionData = sessionResult?.data;
 
-    return clientWithToken.getJWTToken?.() ?? null;
+    if (sessionData && "session" in sessionData && sessionData.session?.token) {
+        return sessionData.session.token;
+    }
+
+    return null;
 }

@@ -1,20 +1,42 @@
 import type { NextFunction, Request, Response } from "express";
 import dotenv from "dotenv";
-import { createRemoteJWKSet, jwtVerify, type JWTPayload } from "jose";
+import { createRemoteJWKSet, jwtVerify } from "jose";
 import path from "node:path";
 
 dotenv.config();
 dotenv.config({ path: path.resolve(process.cwd(), "..", ".env") });
 
-const authBaseUrl = process.env.NEON_AUTH_URL || process.env.VITE_NEON_AUTH_URL;
-const jwksUrl = authBaseUrl
-    ? new URL("jwks", authBaseUrl.endsWith("/") ? authBaseUrl : `${authBaseUrl}/`)
-    : null;
+export function resolveJwksUrl(
+    authBaseUrl: string | undefined,
+    explicitJwksUrl: string | undefined = process.env.NEON_AUTH_JWKS_URL
+): URL | null {
+    if (explicitJwksUrl) {
+        return new URL(explicitJwksUrl);
+    }
+
+    if (!authBaseUrl) {
+        return null;
+    }
+
+    const normalizedBaseUrl = authBaseUrl.endsWith("/") ? authBaseUrl : `${authBaseUrl}/`;
+    return new URL(".well-known/jwks.json", normalizedBaseUrl);
+}
+
+const jwksUrl = resolveJwksUrl(
+    process.env.NEON_AUTH_BASE_URL || process.env.NEON_AUTH_URL || process.env.VITE_NEON_AUTH_URL,
+    process.env.NEON_AUTH_JWKS_URL
+);
 const jwks = jwksUrl ? createRemoteJWKSet(jwksUrl) : null;
+
+interface AuthPayload {
+    sub?: string;
+    aud?: string;
+    [key: string]: unknown;
+}
 
 export interface AuthenticatedRequest extends Request {
     auth: {
-        payload: JWTPayload;
+        payload: AuthPayload;
         token: string;
         userId: string;
     };
@@ -46,8 +68,8 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
     try {
         const { payload } = await jwtVerify(token, jwks);
 
-        if (typeof payload.sub !== "string" || payload.sub.length === 0) {
-        return res.status(401).json({ error: "Invalid authentication token" });
+        if (!payload || typeof payload.sub !== "string" || payload.sub.length === 0) {
+            return res.status(401).json({ error: "Invalid authentication token" });
         }
 
         (req as AuthenticatedRequest).auth = {
