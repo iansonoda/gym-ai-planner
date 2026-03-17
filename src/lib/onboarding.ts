@@ -7,6 +7,7 @@ export interface OnboardingFormData {
     sessionDuration: string;
     equipment: string;
     injuries: string;
+    generalNotes: string;
     preferredSplit: string;
 }
 
@@ -18,6 +19,7 @@ export function normalizeOnboardingProfile(formData: OnboardingFormData): Profil
         sessionDuration: Number(formData.sessionDuration),
         equipment: formData.equipment,
         injuries: formData.injuries.trim(),
+        generalNotes: formData.generalNotes.trim(),
         preferredSplit: formData.preferredSplit,
     };
 }

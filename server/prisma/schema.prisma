@@ -20,6 +20,7 @@ model user_profiles {
   session_duration Int
   equipment String @db.VarChar(20)
   injuries String? @db.Text
+  general_notes String? @db.Text
   preferred_split String @db.VarChar(20)
   updated_at DateTime @default(now()) @db.Timestamptz(6)
 }

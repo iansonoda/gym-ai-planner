@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { User, ProfileInput, TrainingPlan } from "../types";
+import type { User, ProfileInput, RegeneratePlanInput, TrainingPlan } from "../types";
 import { authClient } from "@/lib/auth";
 import { api } from "@/lib/api";
 import { AuthContext } from "./auth-context";
@@ -113,12 +113,12 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         await refreshData();
     }
 
-    async function generatePlan() {
+    async function generatePlan(input?: RegeneratePlanInput) {
         if (!userId) {
             throw new Error("User must be logged in to generate plan");
         }
 
-        await api.generatePlan();
+        await api.generatePlan(input);
         await refreshData();
     }
 

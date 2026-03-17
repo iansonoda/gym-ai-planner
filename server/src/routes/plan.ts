@@ -3,6 +3,7 @@ import { Prisma } from "../../generated/prisma/client";
 import { requireAuth, type AuthenticatedRequest } from "../lib/auth";
 import { prisma } from "../lib/prisma";
 import { generateTrainingPlan } from "../lib/ai";
+import type { RegeneratePlanRequest } from "../../types";
 
 export const planRouter = Router();
 
@@ -11,6 +12,7 @@ planRouter.use(requireAuth);
 planRouter.post("/generate", async (req: Request, res: Response) => {
     try {
         const { userId } = (req as AuthenticatedRequest).auth;
+        const { mode, notes } = (req.body ?? {}) as RegeneratePlanRequest;
 
         const profile = await prisma.user_profiles.findUnique({
             where: {user_id: userId}
@@ -33,7 +35,11 @@ planRouter.post("/generate", async (req: Request, res: Response) => {
         let planJson;
 
         try {
-            planJson = await generateTrainingPlan(profile);
+            planJson = await generateTrainingPlan(profile, {
+                mode,
+                notes,
+                previousPlan: latestPlan?.plan_json ?? null,
+            });
         } catch (error) {
             console.error("AI generation failed: ", error);
             return res.status(500).json({

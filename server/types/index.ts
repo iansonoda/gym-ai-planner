@@ -5,7 +5,15 @@ export interface UserProfile {
     session_duration: number;
     equipment: string;
     injuries?: string | null;
+    general_notes?: string | null;
     preferred_split: string;
+}
+
+export type RegeneratePlanMode = "same" | "update" | "change";
+
+export interface RegeneratePlanRequest {
+    mode?: RegeneratePlanMode;
+    notes?: string;
 }
 
 export interface PlanOverview {

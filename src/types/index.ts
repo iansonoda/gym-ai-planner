@@ -12,6 +12,7 @@ export interface UserProfile {
     session_duration: number;
     equipment: "full_gym" | "home" | "dumbbells" | "calisthenics";
     injuries: string | null;
+    general_notes: string | null;
     preferred_split: "push_pull_legs" | "upper_lower" | "full_body" | "custom";
     updated_at: string;
 }
@@ -23,7 +24,15 @@ export interface ProfileInput {
     sessionDuration: number;
     equipment: string;
     injuries: string;
+    generalNotes: string;
     preferredSplit: string;
+}
+
+export type RegeneratePlanMode = "same" | "update" | "change";
+
+export interface RegeneratePlanInput {
+    mode: RegeneratePlanMode;
+    notes?: string;
 }
 
 export interface PlanOverview {

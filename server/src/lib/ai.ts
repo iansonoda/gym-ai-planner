@@ -1,10 +1,16 @@
 import OpenAI from "openai";
 import dotenv from "dotenv";
-import { TrainingPlan, UserProfile } from "../../types";
+import { RegeneratePlanMode, TrainingPlan, UserProfile } from "../../types";
 
 dotenv.config();
 
 type TrainingPlanBody = Omit<TrainingPlan, "id" | "userId" | "version" | "createdAt">;
+
+interface GeneratePlanOptions {
+    mode?: RegeneratePlanMode;
+    notes?: string;
+    previousPlan?: unknown;
+}
 
 interface RawAiOverview {
     goal?: string;
@@ -61,6 +67,7 @@ function normalizeProfile(profile: UserProfile | Record<string, unknown>): UserP
         session_duration: getNumber(source.session_duration, 60),
         equipment: getString(source.equipment, "full_gym"),
         injuries: typeof source.injuries === "string" ? source.injuries : null,
+        general_notes: typeof source.general_notes === "string" ? source.general_notes : null,
         preferred_split: getString(source.preferred_split, "upper_lower"),
     };
 }
@@ -71,7 +78,8 @@ function parseAiPlanResponse(content: string): RawAiPlanResponse {
 }
 
 export async function generateTrainingPlan(
-    profile: UserProfile | Record<string, unknown>
+    profile: UserProfile | Record<string, unknown>,
+    options: GeneratePlanOptions = {}
 ) : Promise<TrainingPlanBody> {
     const normalizedProfile = normalizeProfile(profile);
 
@@ -92,7 +100,7 @@ export async function generateTrainingPlan(
     })
 
     // Build prompt
-    const prompt = buildPrompt(normalizedProfile);
+    const prompt = buildPrompt(normalizedProfile, options);
 
     try {
         // Call OpenRouter API
@@ -159,7 +167,7 @@ function formatPlanResponse(aiResponse: RawAiPlanResponse, profile: UserProfile)
     return plan;
 }
 
-function buildPrompt(profile: UserProfile) : string {
+function buildPrompt(profile: UserProfile, options: GeneratePlanOptions) : string {
     const goalMap: Record<string, string> = {
         bulk: "Lean Bulk - Build muscle while minimizing fat gain",
         cut: "Cut - Maximize fat loss while preserving muscle",
@@ -188,6 +196,30 @@ function buildPrompt(profile: UserProfile) : string {
         custom: "Best split for their goals, experience level, equipement availibility, frequency, and session duration",
     };
 
+    const regenerateMode = options.mode || "same";
+    const regenerateGuidance = {
+        same: "Keep the plan direction largely the same. Refresh exercise selection and progression without changing the overall goal unless the profile demands it.",
+        update: "Keep the core goal, but apply the user's requested updates and adjustments where possible.",
+        change: "Treat this as a meaningful plan change. Rework the structure to reflect the user's requested change while still respecting the profile constraints.",
+    } satisfies Record<RegeneratePlanMode, string>;
+
+    const previousPlanSection = options.previousPlan
+        ? `
+    Previous plan context:
+    ${JSON.stringify(options.previousPlan, null, 2)}
+    `
+        : "";
+
+    const userRequestSection = options.notes?.trim()
+        ? `
+    Regeneration request from the user:
+    ${options.notes.trim()}
+    `
+        : `
+    Regeneration request from the user:
+    No additional notes. Refresh the plan based on the selected regeneration mode only.
+    `;
+
     const prompt = `    
     Create a personalized ${profile.days_per_week}-day per week training plan for a user with the following profile:
     
@@ -196,7 +228,13 @@ function buildPrompt(profile: UserProfile) : string {
     Session Duration: ${profile.session_duration} minutes per session
     Equipment: ${equipmentMap[profile.equipment] || profile.equipment}
     Injuries: ${profile.injuries || "None"}
+    General Notes: ${profile.general_notes || "None"}
     Preferred Split: ${splitMap[profile.preferred_split] || profile.preferred_split}
+    Regeneration Mode: ${regenerateMode}
+    Regeneration Guidance: ${regenerateGuidance[regenerateMode]}
+
+    ${userRequestSection}
+    ${previousPlanSection}
 
     Generate a comprehensive, evidence-based training plan that is tailored to the user's specific needs and goals. The plan should be realistic, progressive, and sustainable. It should include:
     - A weekly schedule with ${profile.days_per_week} days of training
@@ -204,6 +242,7 @@ function buildPrompt(profile: UserProfile) : string {
     - ${profile.preferred_split} split
     - ${profile.equipment} equipment
     - ${profile.injuries || "None"} injuries
+    - ${profile.general_notes || "None"} general notes
     - ${profile.goal} goal
     - ${profile.experience} experience
     
@@ -278,6 +317,7 @@ function buildPrompt(profile: UserProfile) : string {
     - Include compound movement for beginners/intermediates. Advanced users can include more isolation exercises
     - Always match the ${profile.preferred_split} split
     ${profile.injuries ? `- Avoid exercises that aggravate the following injuries: ${profile.injuries}` : ""}
+    ${profile.general_notes ? `- Incorporate these user preferences and requests where practical: ${profile.general_notes}` : ""}
     - Provide alternative exercises when appropriate, especially if the user has limited equipment
     - Provide a detailed progression strategy suitable for ${profile.goal} and ${profile.experience} experience level
 

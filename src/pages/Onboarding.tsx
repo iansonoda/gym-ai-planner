@@ -2,12 +2,24 @@ import { useAuth } from "@/context/useAuth"
 import { RedirectToSignIn, SignedIn } from "@neondatabase/neon-js/auth/react";
 import { Card } from "@/components/ui/card";
 import { Select } from "@/components/ui/select";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { normalizeOnboardingProfile } from "@/lib/onboarding";
+import { normalizeOnboardingProfile, type OnboardingFormData } from "@/lib/onboarding";
+import { api } from "@/lib/api";
+
+const defaultFormData: OnboardingFormData = {
+    goal: "bulk",
+    experience: "beginner",
+    daysPerWeek: "2",
+    sessionDuration: "30",
+    equipment: "full_gym",
+    injuries: "",
+    generalNotes: "",
+    preferredSplit: "upper_lower",
+};
 
 
 const goalOptions = [
@@ -55,22 +67,44 @@ const splitOptions = [
 
 export default function Onboarding() {
     const { user, saveProfile, generatePlan} = useAuth();
-    const [formData, setFormData] = useState({
-        goal: "bulk",
-        experience: "beginner",
-        daysPerWeek: "2",
-        sessionDuration: "30",
-        equipment: "full_gym",
-        injuries: "",
-        preferredSplit: "upper_lower",
-    });
+    const [formData, setFormData] = useState<OnboardingFormData>(defaultFormData);
     const [isGenerating, setIsGenerating] = useState(false);
+    const [isLoadingProfile, setIsLoadingProfile] = useState(true);
     const [error, setError] = useState("");
     const navigate = useNavigate();
 
     function updateForm(field: string, value: string) {
         setFormData((prev) => ({ ...prev, [field]: value }));
     }
+
+    useEffect(() => {
+        async function loadProfile() {
+            if (!user) {
+                setIsLoadingProfile(false);
+                return;
+            }
+
+            try {
+                const profile = await api.getProfile();
+                setFormData({
+                    goal: profile.goal,
+                    experience: profile.experience,
+                    daysPerWeek: String(profile.days_per_week),
+                    sessionDuration: String(profile.session_duration),
+                    equipment: profile.equipment,
+                    injuries: profile.injuries ?? "",
+                    generalNotes: profile.general_notes ?? "",
+                    preferredSplit: profile.preferred_split,
+                });
+            } catch {
+                setFormData(defaultFormData);
+            } finally {
+                setIsLoadingProfile(false);
+            }
+        }
+
+        loadProfile();
+    }, [user]);
 
     async function handleQuestionnaire(e: React.SubmitEvent) {
         e.preventDefault();
@@ -102,7 +136,7 @@ export default function Onboarding() {
                     { /* Progress Indicator */}
 
                     { /* Step 1: Questionnaire */}
-                    {!isGenerating ? <Card variant="bordered">
+                    {!isGenerating && !isLoadingProfile ? <Card variant="bordered">
                         <h1 className="text-2xl font-semibold">Tell Us About Yourself</h1>
                         <p className="text-muted mb-6">Help us create the perfect plan for you.</p>
                         <form onSubmit={handleQuestionnaire} className="space-y-5">
@@ -160,6 +194,15 @@ export default function Onboarding() {
                                 onChange={(e) => updateForm("injuries", e.target.value)}
                             />
 
+                            <Textarea
+                                id="generalNotes"
+                                label="Anything else you want in your plan? (Optional)"
+                                placeholder="E.g, I want more pull-ups, I dislike barbell bench, I want extra glute work, keep sessions simple."
+                                rows={4}
+                                value={formData.generalNotes}
+                                onChange={(e) => updateForm("generalNotes", e.target.value)}
+                            />
+
                             <div className="flex gap-3 pt-2">
                                 <Button type="submit" className="flex-1 gap-2">
                                     Generate My Plan <ArrowRight className="w-4 h-4"/>
@@ -170,8 +213,14 @@ export default function Onboarding() {
                     </Card> : (
                         <Card variant="bordered" className="text-center py-16">
                             <Loader2 className="w-12 h-12 text-accent mx-auto mb-6 animate-spin" />
-                            <h1 className="text-2xl font-bold mb-2">Creating your Plan</h1>
-                            <p className="text-muted"> Our AI is building your personalized workout plan. This may take a few seconds...</p>
+                            <h1 className="text-2xl font-bold mb-2">
+                                {isLoadingProfile ? "Loading your profile" : "Creating your Plan"}
+                            </h1>
+                            <p className="text-muted">
+                                {isLoadingProfile
+                                    ? "We are pulling in your latest preferences."
+                                    : " Our AI is building your personalized workout plan. This may take a few seconds..."}
+                            </p>
                         </Card>
                     )}
 

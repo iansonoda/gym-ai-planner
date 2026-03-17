@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { normalizeOnboardingProfile } from "./onboarding";
 
-test("normalizeOnboardingProfile converts select values to numbers and trims injuries", () => {
+test("normalizeOnboardingProfile converts select values to numbers and trims text fields", () => {
     const profile = normalizeOnboardingProfile({
         goal: "strength",
         experience: "intermediate",
@@ -10,6 +10,7 @@ test("normalizeOnboardingProfile converts select values to numbers and trims inj
         sessionDuration: "60",
         equipment: "full_gym",
         injuries: "  knee pain  ",
+        generalNotes: "  prefer pull-ups and cables  ",
         preferredSplit: "upper_lower",
     });
 
@@ -20,6 +21,7 @@ test("normalizeOnboardingProfile converts select values to numbers and trims inj
         sessionDuration: 60,
         equipment: "full_gym",
         injuries: "knee pain",
+        generalNotes: "prefer pull-ups and cables",
         preferredSplit: "upper_lower",
     });
 });

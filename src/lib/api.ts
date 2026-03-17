@@ -1,4 +1,4 @@
-import type { ProfileInput } from "../types"
+import type { ProfileInput, RegeneratePlanInput, UserProfile } from "../types"
 import { getAuthToken } from "./auth";
 
 const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
@@ -51,6 +51,7 @@ export const api = {
     saveProfile: (profile: ProfileInput) => {
         return post("/profile", profile)
     },
-    generatePlan: () => post("/plan/generate", {}),
+    getProfile: (): Promise<UserProfile> => get("/profile"),
+    generatePlan: (input?: RegeneratePlanInput) => post("/plan/generate", input ?? {}),
     getCurrentPlan: () => get("/plan/current"),
 };
