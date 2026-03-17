@@ -1,5 +1,5 @@
 import { Navigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/useAuth";
 import { Button } from "@/components/ui/button";
 import { Calendar, Dumbbell, RefreshCcw, Target, TrendingUp } from "lucide-react";
 import { Card } from "@/components/ui/card";

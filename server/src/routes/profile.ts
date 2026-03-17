@@ -1,15 +1,15 @@
 import { Router, type Request, type Response } from "express";
+import { requireAuth, type AuthenticatedRequest } from "../lib/auth";
 import { prisma } from "../lib/prisma";
 
 export const profileRouter = Router();
 
+profileRouter.use(requireAuth);
+
 profileRouter.post("/", async (req: Request, res: Response) => {
     try {
-        const {userId, ...profileData} = req.body;
-
-        if (!userId) {
-            return res.status(400).json({ error: "User ID is required" });
-        }
+        const { userId } = (req as AuthenticatedRequest).auth;
+        const profileData = req.body;
 
         const {
             goal,

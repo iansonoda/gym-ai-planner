@@ -1,4 +1,4 @@
-import { useAuth } from "@/context/AuthContext"
+import { useAuth } from "@/context/useAuth"
 import { RedirectToSignIn, SignedIn } from "@neondatabase/neon-js/auth/react";
 import { Card } from "@/components/ui/card";
 import { Select } from "@/components/ui/select";

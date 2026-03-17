@@ -1,16 +1,16 @@
 import { Router, type Request, type Response } from "express";
+import { Prisma } from "../../generated/prisma/client";
+import { requireAuth, type AuthenticatedRequest } from "../lib/auth";
 import { prisma } from "../lib/prisma";
 import { generateTrainingPlan } from "../lib/ai";
 
 export const planRouter = Router();
 
+planRouter.use(requireAuth);
+
 planRouter.post("/generate", async (req: Request, res: Response) => {
     try {
-        const {userId} = req.body
-
-        if (!userId) {
-            return res.status(400).json({ error: "User ID is required" });
-        }
+        const { userId } = (req as AuthenticatedRequest).auth;
 
         const profile = await prisma.user_profiles.findUnique({
             where: {user_id: userId}
@@ -47,7 +47,7 @@ planRouter.post("/generate", async (req: Request, res: Response) => {
         const newPlan = await prisma.training_plans.create({
             data: {
                 user_id: userId,
-                plan_json: planJson as any,
+                plan_json: planJson as Prisma.InputJsonValue,
                 plan_text: planText,
                 version: nextVersion,
             },
@@ -67,10 +67,7 @@ planRouter.post("/generate", async (req: Request, res: Response) => {
 
 planRouter.get("/current", async (req: Request, res: Response) => {
     try {
-        const userId = req.query.userId as string; 
-        if (!userId) {
-            return res.status(400).json({error: "User ID is required"})
-        }
+        const { userId } = (req as AuthenticatedRequest).auth;
 
         const plan = await prisma.training_plans.findFirst({
             where: {user_id: userId},

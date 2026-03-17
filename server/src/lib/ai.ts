@@ -4,20 +4,76 @@ import { TrainingPlan, UserProfile } from "../../types";
 
 dotenv.config();
 
+type TrainingPlanBody = Omit<TrainingPlan, "id" | "userId" | "version" | "createdAt">;
+
+interface RawAiOverview {
+    goal?: string;
+    frequency?: string;
+    split?: string;
+    notes?: string;
+}
+
+interface RawAiExercise {
+    name?: string;
+    sets?: number;
+    reps?: string;
+    rest?: string;
+    rpe?: number;
+    notes?: string;
+    alternatives?: string[];
+}
+
+interface RawAiDay {
+    day?: string;
+    focus?: string;
+    exercises?: RawAiExercise[];
+}
+
+interface RawAiPlanResponse {
+    overview?: RawAiOverview;
+    weeklySchedule?: RawAiDay[];
+    progression?: string;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === "object" && value !== null;
+}
+
+function getString(value: unknown, fallback: string) {
+    return typeof value === "string" && value.length > 0 ? value : fallback;
+}
+
+function getNumber(value: unknown, fallback: number) {
+    return typeof value === "number" ? value : fallback;
+}
+
+function getStringArray(value: unknown): string[] {
+    return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
+}
+
+function normalizeProfile(profile: UserProfile | Record<string, unknown>): UserProfile {
+    const source = isRecord(profile) ? profile : {};
+
+    return {
+        goal: getString(source.goal, "bulk"),
+        experience: getString(source.experience, "beginner"),
+        days_per_week: getNumber(source.days_per_week, 4),
+        session_duration: getNumber(source.session_duration, 60),
+        equipment: getString(source.equipment, "full_gym"),
+        injuries: typeof source.injuries === "string" ? source.injuries : null,
+        preferred_split: getString(source.preferred_split, "upper_lower"),
+    };
+}
+
+function parseAiPlanResponse(content: string): RawAiPlanResponse {
+    const parsed = JSON.parse(content) as unknown;
+    return isRecord(parsed) ? parsed as RawAiPlanResponse : {};
+}
+
 export async function generateTrainingPlan(
     profile: UserProfile | Record<string, unknown>
-) : Promise<Omit<TrainingPlan, "id" | "userId" | "version" | "createdAt">> {
-
-    // Normalize Profile Data
-    const normalizedProfile: UserProfile = {
-        goal: profile.goal || "bulk",
-        experience: profile.experience || "beginner",
-        days_per_week: profile.days_per_week || 4,
-        session_duration: profile.session_duration || 60,
-        equipment: profile.equipment || "full_gym",
-        injuries: profile.injuries || null,
-        preferred_split: profile.preferred_split || "upper_lower",
-    };
+) : Promise<TrainingPlanBody> {
+    const normalizedProfile = normalizeProfile(profile);
 
     const apiKey = process.env.OPEN_ROUTER_KEY;
 
@@ -67,7 +123,7 @@ export async function generateTrainingPlan(
             throw new Error("No content received from AI");
         }
 
-        const planData = JSON.parse(content);
+        const planData = parseAiPlanResponse(content);
 
         return formatPlanResponse(planData, normalizedProfile);
     } catch (error) {
@@ -76,25 +132,25 @@ export async function generateTrainingPlan(
     }
 }
 
-function formatPlanResponse(aiResponse: any, profile: UserProfile): Omit<TrainingPlan, "id" | "userId" | "version" | "createdAt"> {
-    const plan: Omit<TrainingPlan, "id" | "userId" | "version" | "createdAt"> = {
+function formatPlanResponse(aiResponse: RawAiPlanResponse, profile: UserProfile): TrainingPlanBody {
+    const plan: TrainingPlanBody = {
         overview: {
             goal: aiResponse.overview?.goal || `Customized ${profile.goal} program`,
             frequency: aiResponse.overview?.frequency || `${profile.days_per_week} days per week`,
             split: aiResponse.overview?.split || profile.preferred_split,
             notes: aiResponse.overview?.notes || "Follow this plan consistently for best results",
         },
-        weeklySchedule: (aiResponse.weeklySchedule || []).map((day: any) => ({
+        weeklySchedule: (aiResponse.weeklySchedule || []).map((day) => ({
             day: day.day || "Day",
             focus: day.focus || "Full Body",
-            exercises: (day.exercises || []).map((ex: any) => ({
-                name: ex.name || "Exercise",
-                sets: ex.sets || 3,
-                reps: ex.reps || "10-12",
-                rest: ex.rest || "60s",
-                rpe: ex.rpe || 8,
-                notes: ex.notes || "",
-                alternatives: ex.alternatives || [],
+            exercises: (day.exercises || []).map((exercise) => ({
+                name: exercise.name || "Exercise",
+                sets: exercise.sets || 3,
+                reps: exercise.reps || "10-12",
+                rest: exercise.rest || "60s",
+                rpe: exercise.rpe || 8,
+                notes: exercise.notes || "",
+                alternatives: getStringArray(exercise.alternatives),
             })),
         })),
         progression: aiResponse.progression || "Increase weight by 2.5-5lbs (1-2.5kg) when you can complete all sets with good form. Track your progress weekly.",

@@ -1,46 +1,69 @@
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { User, ProfileInput, TrainingPlan } from "../types";
 import { authClient } from "@/lib/auth";
 import { api } from "@/lib/api";
-import { useCallback } from "react";
+import { AuthContext } from "./auth-context";
 
-interface AuthContextType {
-    user: User | null;
-    plan: TrainingPlan | null;
-    isLoading: boolean;
-    saveProfile: (profile: ProfileInput) => Promise<void>;
-    generatePlan: () => Promise<void>;
-    refreshData: () => Promise<void>;
+interface PlanResponse {
+    id: string;
+    userId: string;
+    planJson: TrainingPlan;
+    version: string;
+    createdAt: string;
 }
 
-const AuthContext = createContext<AuthContextType | null>(null);
+interface SessionUserLike {
+    id: string;
+    email: string;
+    createdAt?: Date | string;
+}
+
+function mapUser(user: SessionUserLike): User {
+    return {
+        id: user.id,
+        email: user.email,
+        createdAt:
+            user.createdAt instanceof Date
+                ? user.createdAt.toISOString()
+                : typeof user.createdAt === "string"
+                  ? user.createdAt
+                  : "",
+    };
+}
+
+function mapPlan(planData: PlanResponse): TrainingPlan {
+    return {
+        id: planData.id,
+        userId: planData.userId,
+        overview: planData.planJson.overview,
+        weeklySchedule: planData.planJson.weeklySchedule,
+        progression: planData.planJson.progression,
+        version: planData.version,
+        createdAt: planData.createdAt,
+    };
+}
 
 export default function AuthProvider({ children }: { children: React.ReactNode }) {
-    const [neonUser, setNeonUser] = useState<any>(null);
+    const [neonUser, setNeonUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [plan, setPlan] = useState<TrainingPlan | null>(null);
     const isRefreshingRef = useRef(false);
+    const userId = neonUser?.id ?? null;
 
     useEffect(() => {
         async function loadUser() {
             try {
-                const result = await authClient.getSession()
-                if (result && result.data?.user) {
-                    const user = result.data.user;
+                const result = await authClient.getSession();
+                const sessionData = result?.data;
+                const rawUser = sessionData && "user" in sessionData ? sessionData.user : null;
+
+                if (rawUser && typeof rawUser.id === "string" && typeof rawUser.email === "string") {
+                    const user = mapUser(rawUser);
                     setNeonUser(user);
-                    
-                    // Immediately fetch plan for the logged in user
-                    const planData = await api.getCurrentPlan(user.id).catch(() => null);
+
+                    const planData = await api.getCurrentPlan().catch(() => null);
                     if (planData) {
-                        setPlan({
-                            id: planData.id,
-                            userId: planData.userId,
-                            overview: planData.planJson.overview,
-                            weeklySchedule: planData.planJson.weeklySchedule,
-                            progression: planData.planJson.progression,
-                            version: planData.version,
-                            createdAt: planData.createdAt,
-                        });
+                        setPlan(mapPlan(planData as PlanResponse));
                     }
                 } else {
                     setNeonUser(null);
@@ -59,56 +82,43 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     }, [])
 
     useEffect(() => {
-        if (!isLoading && !neonUser) {
+        if (!isLoading && !userId) {
             setPlan(null);
         }
-    }, [neonUser?.id, isLoading])
+    }, [userId, isLoading])
 
-    // refreshData with memoization
     const refreshData = useCallback(async () => {
-        if (!neonUser || isRefreshingRef.current) return;
-        
+        if (!userId || isRefreshingRef.current) return;
+
         isRefreshingRef.current = true;
         try {
-            // Fetch profile
-            //const profileData =
+            const planData = await api.getCurrentPlan().catch(() => null);
 
-            // Fetch plan
-            const planData = await api.getCurrentPlan(neonUser.id).catch(() => null);
-        
             if (planData) {
-                setPlan({
-                    id: planData.id,
-                    userId: planData.userId,
-                    overview: planData.planJson.overview,
-                    weeklySchedule: planData.planJson.weeklySchedule,
-                    progression: planData.planJson.progression,
-                    version: planData.version,
-                    createdAt: planData.createdAt,
-                })
+                setPlan(mapPlan(planData as PlanResponse));
             }
         } catch (error) {
             console.error("Error refreshing data:", error);
         } finally {
             isRefreshingRef.current = false;
         }
-    }, [neonUser?.id])
+    }, [userId])
 
     async function saveProfile(profileData: ProfileInput) {
-        if (!neonUser) {
+        if (!userId) {
             throw new Error("User must be logged in to save profile");
         }
 
-        await api.saveProfile(neonUser.id, profileData);
+        await api.saveProfile(profileData);
         await refreshData();
     }
 
     async function generatePlan() {
-        if (!neonUser) {
+        if (!userId) {
             throw new Error("User must be logged in to generate plan");
         }
 
-        await api.generatePlan(neonUser.id);
+        await api.generatePlan();
         await refreshData();
     }
 
@@ -126,12 +136,4 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
             {children}
         </AuthContext.Provider>
     )
-}
-
-export function useAuth() {
-    const context = useContext(AuthContext);
-    if (!context) {
-        throw new Error("useAuth must be used within an AuthProvider");
-    }
-    return context;
 }
