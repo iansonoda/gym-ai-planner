@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom"
 import Home from "./pages/Home"
 import Auth from "./pages/Auth"
@@ -10,6 +11,13 @@ import { authClient } from "./lib/auth";
 import AuthProvider from "./context/AuthContext";
 
 function App() {
+  useEffect(() => {
+    document.documentElement.classList.add("dark");
+    document.documentElement.style.colorScheme = "dark";
+    document.body.style.backgroundColor = "var(--color-background)";
+    document.body.style.color = "var(--color-foreground)";
+  }, []);
+
   return (
     <NeonAuthUIProvider authClient={authClient} defaultTheme="dark">
       <AuthProvider>

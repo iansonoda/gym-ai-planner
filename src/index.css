@@ -9,25 +9,35 @@
   --color-muted: #a1a1aa;
   --color-border: #27272a;
   --color-card: #18181b;
+  --color-card-2: #111113;
+  --color-popover: #141417;
   --color-accent: #a3e635;
   --color-accent-hover: #84cc16;
+  --color-ring: rgba(163, 230, 53, 0.35);
+  --color-danger: #ef4444;
 
   /* Map library variables to your theme colors */
   --background: var(--color-background);
   --foreground: var(--color-foreground);
   --card: var(--color-card);
+  --card-foreground: var(--color-foreground);
+  --popover: var(--color-popover);
+  --popover-foreground: var(--color-foreground);
   --muted: var(--color-muted);
+  --muted-foreground: var(--color-muted);
   --border: var(--color-border);
-
-  /* Fix for Auth Page Colors */
   --primary: var(--color-foreground);
   --primary-foreground: var(--color-background);
-  --card-foreground: var(--color-foreground);
-  --muted-foreground: var(--color-muted);
   --accent: var(--color-accent);
-  --accent-foreground: var(--color-foreground);
+  --accent-foreground: #0a0a0a;
+  --secondary: var(--color-card);
+  --secondary-foreground: var(--color-foreground);
   --input: var(--color-border);
-
+  --ring: var(--color-ring);
+  --destructive: var(--color-danger);
+  --destructive-foreground: #fafafa;
+  --sidebar: var(--color-card-2);
+  --input: var(--color-border);
 }
 
 @layer base {
@@ -35,6 +45,7 @@
     font-family: var(--font-sans);
     background-color: var(--color-background);
     color: var(--color-foreground);
+    color-scheme: dark;
   }
 
   body {
@@ -48,5 +59,46 @@
   [data-slot="skeleton"],
   .animate-pulse {
     background-color: var(--color-border) !important;
+  }
+
+  .neon-auth-shell,
+  .neon-auth-shell [data-radix-popper-content-wrapper],
+  .neon-auth-shell [role="dialog"] {
+    color-scheme: dark;
+  }
+
+  .neon-auth-shell :where(.bg-background) {
+    background-color: var(--color-background) !important;
+  }
+
+  .neon-auth-shell :where(.bg-card, .bg-sidebar) {
+    background-color: var(--color-card) !important;
+  }
+
+  .neon-auth-shell :where(.bg-popover) {
+    background-color: var(--color-popover) !important;
+  }
+
+  .neon-auth-shell :where(.text-foreground, .text-card-foreground, .text-popover-foreground) {
+    color: var(--color-foreground) !important;
+  }
+
+  .neon-auth-shell :where(.text-muted-foreground) {
+    color: var(--color-muted) !important;
+  }
+
+  .neon-auth-shell :where(.border, .border-input, .border-border) {
+    border-color: var(--color-border) !important;
+  }
+
+  .neon-auth-shell :where(input, textarea, select, [role="menu"], [role="dialog"]) {
+    background-color: var(--color-card-2);
+    color: var(--color-foreground);
+    border-color: var(--color-border);
+  }
+
+  .neon-auth-shell :where(button):focus-visible,
+  .neon-auth-shell :where(input, textarea, select):focus-visible {
+    box-shadow: 0 0 0 3px var(--color-ring) !important;
   }
 }

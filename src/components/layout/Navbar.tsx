@@ -16,13 +16,18 @@ export default function Navbar() {
                     <span className="font-semibold text-lg">Gym AI</span>
                 </Link>
 
-                <nav>
+                <nav className="flex items-center gap-2">
                     {user ? (
                         <>
                             <Link to="/profile">
                                 <Button variant="ghost" size="sm"> My Plan </Button>
                             </Link>
-                            <UserButton className="bg-accent"/>
+                            <Link to="/account/profile">
+                                <Button variant="ghost" size="sm"> Settings </Button>
+                            </Link>
+                            <div className="neon-auth-shell">
+                                <UserButton className="rounded-full border border-[var(--color-border)] bg-accent p-1" />
+                            </div>
                         </>
                     ) : (
                         <>
