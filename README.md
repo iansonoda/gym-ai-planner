@@ -1,113 +1,89 @@
-# 🏋️‍♂️ Gym AI Planner
+# GymAI
 
-A modern, AI-powered workout companion designed to help you reach your fitness goals with precision. Gym AI Planner takes the guesswork out of training by generating personalized workout routines based on your unique profile, equipment, and experience.
+GymAI is a full-stack web application that generates personalized workout plans based on a user's goals, experience level, schedule, equipment, and training constraints. I built this project to practice shipping a polished product end to end, including AI plan generation, authentication, persistent user data, and a responsive frontend.
 
----
+## Preview
 
-## ✨ Features
+![GymAI home page](./src/assets/readme-hero.png)
 
-- **🎯 Personalized Onboarding**: A comprehensive onboarding flow to understand your goals, experience level (Beginner to Advanced), and physical constraints.
-- **🤖 AI-Driven Plan Generation**: Uses OpenRouter (AI) to craft custom training splits (Full Body, PPL, Upper/Lower, etc.) tailored specifically to your needs.
-- **📊 Detailed Workout Views**: Beautifully rendered exercise tables including sets, reps, rest periods, and RPE (Rate of Perceived Exertion).
-- **📈 Progression Strategies**: Custom-tailored advice on how to progress your lifts over time based on your goals.
-- **🛠 Equipment Awareness**: Specify available equipment (Commercial Gym, Home Gym, Bodyweight only) to ensure your plan is actionable.
-- **🌱 Injuries & Preferences**: Accounts for past injuries and preferred training styles to keep you safe and motivated.
-- **🔄 Plan Versioning**: Automatically tracks and stores different versions of your training plans as you evolve and regenerate them.
-- **🎨 Modern UI**: Built with a sleek, premium design system using Tailwind CSS 4 and Shadcn UI.
+![GymAI sign up flow](./src/assets/readme-signup.png)
 
----
+![GymAI profile view](./src/assets/readme-profile.png)
 
-## 🚀 Tech Stack
+![GymAI weekly plan view 1](./src/assets/readme-plan1.png)
 
-### Frontend
-- **Framework**: [React 19](https://react.dev/)
-- **Build Tool**: [Vite 8](https://vitejs.dev/)
-- **Styling**: [Tailwind CSS 4](https://tailwindcss.com/)
-- **UI Components**: [Shadcn UI](https://ui.shadcn.com/)
-- **Icons**: [Lucide React](https://lucide.dev/)
-- **Routing**: [React Router 7](https://reactrouter.com/)
+![GymAI weekly plan view 2](./src/assets/readme-plan2.png)
 
-### Backend
-- **Runtime**: [Node.js](https://nodejs.org/)
-- **Framework**: [Express.js 5](https://expressjs.com/)
-- **ORM**: [Prisma 7](https://www.prisma.io/)
-- **Database**: [PostgreSQL (Neon)](https://neon.tech/)
-- **AI Integration**: [OpenRouter API](https://openrouter.ai/)
-- **Language**: [TypeScript](https://www.typescriptlang.org/)
+## What It Does
 
----
+- Collects onboarding data about training goals, experience, schedule, preferred split, and equipment
+- Generates AI-based workout plans with sets, reps, rest times, focus areas, and progression guidance
+- Saves user profiles and plan versions so plans can be revisited and regenerated
+- Provides authenticated flows for sign up, sign in, account management, and plan review
 
-## 🛠 Getting Started
+## Tech Stack
 
-### Prerequisites
-- Node.js (v18 or higher)
-- A PostgreSQL database (e.g., [Neon.tech](https://neon.tech/))
+- Frontend: React 19, Vite, TypeScript, Tailwind CSS 4
+- Backend: Node.js, Express, TypeScript
+- Database: PostgreSQL with Prisma
+- Auth: Neon Auth
+- AI: OpenRouter
 
-### Installation
+## Local Setup
 
-1. **Clone the repository**:
-   ```bash
-   git clone https://github.com/iansonoda/gym-ai-planner.git
-   cd gym-ai-planner
-   ```
+1. Clone the repository and install frontend dependencies:
 
-2. **Setup the Backend**:
-   ```bash
-   cd server
-   npm install
-   ```
-
-3. **Configure Server Environment**:
-   Create a `.env` file in the `server` directory:
-   ```env
-   DATABASE_URL="postgresql://user:password@host/dbname?sslmode=require"
-   OPEN_ROUTER_KEY="your-openrouter-key"
-   PORT=3001
-   ```
-
-4. **Initialize Database**:
-   ```bash
-   npx prisma generate
-   npx prisma db push
-   ```
-
-5. **Setup the Frontend**:
-   ```bash
-   cd ..
-   npm install
-   ```
-
-6. **Configure Frontend Environment**:
-   Create a `.env` file in the root directory:
-   ```env
-   VITE_API_URL="http://localhost:3001"
-   ```
-
-7. **Run the Application**:
-   - Start the backend: `cd server && npm run dev:server`
-   - Start the frontend: `npm run dev`
-
----
-
-## 📁 Project Structure
-
-```text
-├── src/                # Frontend React application
-│   ├── components/     # Reusable UI components (PlanDisplay, UI primitives)
-│   ├── pages/          # Application views (Onboarding, Profile, Auth)
-│   ├── context/        # Auth and Global State
-│   ├── lib/            # API client and helper functions
-│   └── types/          # Shared type definitions
-├── server/             # Express.js backend
-│   ├── prisma/         # Database schema and client generation
-│   ├── src/            # Backend logic, routes, and AI generation
-│   └── types/          # Backend-specific types
-├── public/             # Static public assets
-└── package.json        # Frontend dependencies and scripts
+```bash
+git clone https://github.com/iansonoda/gym-ai-planner.git
+cd gym-ai-planner
+npm install
 ```
 
----
+2. Install backend dependencies:
 
-## 📄 License
+```bash
+cd server
+npm install
+cd ..
+```
 
-This project is licensed under the MIT License.
+3. Create `server/.env`:
+
+```env
+DATABASE_URL="postgresql://user:password@host/dbname?sslmode=require"
+OPEN_ROUTER_KEY="your-openrouter-key"
+PORT=3001
+```
+
+4. Create `.env` in the project root:
+
+```env
+VITE_API_URL="http://localhost:3001"
+```
+
+5. Initialize the database:
+
+```bash
+cd server
+npx prisma generate
+npx prisma db push
+cd ..
+```
+
+6. Start the app:
+
+```bash
+cd server
+npm run dev:server
+cd ..
+```
+
+```bash
+npm run dev
+```
+
+The frontend runs through Vite and the backend serves the API used for profile storage and plan generation.
+
+## Why I Built It
+
+As a new graduate, I wanted a project that showed more than isolated coding exercises. GymAI let me demonstrate product thinking, full-stack development, database design, API integration, authentication flows, and frontend polish in one application.
