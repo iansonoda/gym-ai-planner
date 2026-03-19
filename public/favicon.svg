@@ -1,8 +1,19 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
-  <rect width="64" height="64" rx="18" fill="#0A0A0A"/>
-  <rect x="3" y="3" width="58" height="58" rx="15" stroke="#27272A" stroke-width="2"/>
-  <path d="M18 38.5C18 35.4624 20.4624 33 23.5 33H40.5C43.5376 33 46 35.4624 46 38.5V41C46 42.1046 45.1046 43 44 43H20C18.8954 43 18 42.1046 18 41V38.5Z" fill="#A3E635"/>
-  <path d="M22 24C22 18.4772 26.4772 14 32 14C37.5228 14 42 18.4772 42 24V31H22V24Z" fill="#FAFAFA"/>
-  <path d="M27 24C27 21.2386 29.2386 19 32 19C34.7614 19 37 21.2386 37 24V26.5H27V24Z" fill="#0A0A0A"/>
-  <rect x="29.5" y="37" width="5" height="10" rx="2.5" fill="#0A0A0A"/>
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="#A3E635"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m6.5 6.5 11 11" />
+  <path d="m21 21-1-1" />
+  <path d="m3 3 1 1" />
+  <path d="m18 22 4-4" />
+  <path d="m2 6 4-4" />
+  <path d="m3 10 7-7" />
+  <path d="m14 21 7-7" />
 </svg>
