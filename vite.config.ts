@@ -1,9 +1,8 @@
-import { defineConfig } from 'vite'
+import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import path from "path"
 
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [
     react(),
@@ -12,6 +11,33 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+    },
+  },
+  test: {
+    fileParallelism: false,
+    include: [
+      "src/**/*.unit.test.ts",
+      "src/**/*.unit.test.tsx",
+      "server/src/**/*.unit.test.ts",
+      "server/src/**/*.integration.test.ts",
+      "server/src/**/*.perf.test.ts",
+    ],
+    environment: "node",
+    environmentMatchGlobs: [
+      ["src/**/*.unit.test.ts", "jsdom"],
+      ["src/**/*.unit.test.tsx", "jsdom"],
+    ],
+    setupFiles: ["./test/setup/vitest.setup.ts"],
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "json-summary", "html"],
+      reportsDirectory: "./test-results/coverage",
+      include: ["src/**/*.{ts,tsx}", "server/src/**/*.ts"],
+      exclude: [
+        "src/main.tsx",
+        "src/**/*.d.ts",
+        "server/src/index.ts",
+      ],
     },
   },
 })

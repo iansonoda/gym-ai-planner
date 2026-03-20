@@ -1,0 +1,26 @@
+{
+  "testedUserScenarios": {
+    "passed": 7,
+    "total": 7
+  },
+  "handledInputCombinations": {
+    "passed": 12,
+    "total": 12
+  },
+  "planGenerationOutcomes": {
+    "passed": 5,
+    "total": 5,
+    "expectedSuccessCount": 2,
+    "expectedFailureCount": 3,
+    "passRate": 100
+  },
+  "performanceTargets": [
+    {
+      "id": "local-plan-route",
+      "title": "[perf] POST /api/plan/generate responds locally in under 1000ms",
+      "thresholdMs": 1000,
+      "observedMs": 5.075290999999993,
+      "passed": true
+    }
+  ]
+}

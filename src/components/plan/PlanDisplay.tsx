@@ -91,6 +91,17 @@ interface PlanDisplayProps {
 }
 
 export function PlanDisplay({ weeklySchedule }: PlanDisplayProps) {
+    if (weeklySchedule.length === 0) {
+        return (
+            <Card variant="bordered" className="mb-6">
+                <h3 className="font-semibold text-lg">No plan generated yet</h3>
+                <p className="text-sm text-muted mt-2">
+                    Generate a training plan to see your weekly schedule and exercise details.
+                </p>
+            </Card>
+        );
+    }
+
     return (
     <div className="space-y-6 mb-6">
         {weeklySchedule.map((schedule, key) => (

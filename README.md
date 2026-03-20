@@ -84,6 +84,30 @@ npm run dev
 
 The frontend runs through Vite and the backend serves the API used for profile storage and plan generation.
 
+## Testing
+
+Run the full test suite:
+
+```bash
+npm test
+```
+
+Run only unit or integration coverage:
+
+```bash
+npm run test:unit
+npm run test:integration
+```
+
+Generate coverage or metrics summaries:
+
+```bash
+npm run test:coverage
+npm run test:metrics
+```
+
+`npm run test:metrics` writes machine-readable output to `test-results/vitest-report.json` and `test-results/metrics-summary.json`, including scenario counts, input-combination counts, plan-generation route outcomes, and local mocked response-time measurements.
+
 ## Why I Built It
 
 As a new graduate, I wanted a project that showed more than isolated coding exercises. GymAI let me demonstrate product thinking, full-stack development, database design, API integration, authentication flows, and frontend polish in one application.

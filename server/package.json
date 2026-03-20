@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "node --import ./node_modules/tsx/dist/loader.mjs --test src/**/*.test.ts",
+    "test": "npm run test --prefix ..",
     "dev:server": "tsx watch src/index.ts"
   },
   "keywords": [],

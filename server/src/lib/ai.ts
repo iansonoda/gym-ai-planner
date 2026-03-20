@@ -57,7 +57,7 @@ function getStringArray(value: unknown): string[] {
     return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
 }
 
-function normalizeProfile(profile: UserProfile | Record<string, unknown>): UserProfile {
+export function normalizeProfile(profile: UserProfile | Record<string, unknown>): UserProfile {
     const source = isRecord(profile) ? profile : {};
 
     return {
@@ -72,7 +72,7 @@ function normalizeProfile(profile: UserProfile | Record<string, unknown>): UserP
     };
 }
 
-function parseAiPlanResponse(content: string): RawAiPlanResponse {
+export function parseAiPlanResponse(content: string): RawAiPlanResponse {
     const parsed = JSON.parse(content) as unknown;
     return isRecord(parsed) ? parsed as RawAiPlanResponse : {};
 }
@@ -140,7 +140,7 @@ export async function generateTrainingPlan(
     }
 }
 
-function formatPlanResponse(aiResponse: RawAiPlanResponse, profile: UserProfile): TrainingPlanBody {
+export function formatPlanResponse(aiResponse: RawAiPlanResponse, profile: UserProfile): TrainingPlanBody {
     const plan: TrainingPlanBody = {
         overview: {
             goal: aiResponse.overview?.goal || `Customized ${profile.goal} program`,
@@ -167,7 +167,7 @@ function formatPlanResponse(aiResponse: RawAiPlanResponse, profile: UserProfile)
     return plan;
 }
 
-function buildPrompt(profile: UserProfile, options: GeneratePlanOptions) : string {
+export function buildPrompt(profile: UserProfile, options: GeneratePlanOptions) : string {
     const goalMap: Record<string, string> = {
         bulk: "Lean Bulk - Build muscle while minimizing fat gain",
         cut: "Cut - Maximize fat loss while preserving muscle",

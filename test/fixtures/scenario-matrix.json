@@ -1,0 +1,128 @@
+{
+  "userScenarios": [
+    {
+      "id": "beginner-strength-full-gym",
+      "title": "[scenario] beginner strength full gym plan generation works",
+      "profileKey": "beginnerStrengthFullGym",
+      "mode": "same"
+    },
+    {
+      "id": "intermediate-cut-home",
+      "title": "[scenario] intermediate cut home plan generation works",
+      "profileKey": "intermediateCutHome",
+      "mode": "same"
+    },
+    {
+      "id": "advanced-recomp-injury",
+      "title": "[scenario] advanced recomp with injury notes plan generation works",
+      "profileKey": "advancedRecompInjury",
+      "mode": "same"
+    },
+    {
+      "id": "regenerate-same",
+      "title": "[scenario] regenerate mode same plan generation works",
+      "profileKey": "beginnerStrengthFullGym",
+      "mode": "same"
+    },
+    {
+      "id": "regenerate-update",
+      "title": "[scenario] regenerate mode update plan generation works",
+      "profileKey": "beginnerStrengthFullGym",
+      "mode": "update"
+    },
+    {
+      "id": "regenerate-change",
+      "title": "[scenario] regenerate mode change plan generation works",
+      "profileKey": "beginnerStrengthFullGym",
+      "mode": "change"
+    },
+    {
+      "id": "partial-ai-fallback",
+      "title": "[scenario] AI fallback formatting handles malformed partial plan data"
+    }
+  ],
+  "inputCombinations": [
+    {
+      "id": "basic-strength",
+      "title": "[input] converts strength profile values for four day training"
+    },
+    {
+      "id": "trimmed-optional-fields",
+      "title": "[input] trims optional text fields before saving the profile"
+    },
+    {
+      "id": "empty-optional-fields",
+      "title": "[input] preserves empty optional text fields"
+    },
+    {
+      "id": "zero-day-value",
+      "title": "[input] converts a zero day-per-week string into a number"
+    },
+    {
+      "id": "zero-duration-value",
+      "title": "[input] converts a zero session-duration string into a number"
+    },
+    {
+      "id": "decimal-duration",
+      "title": "[input] converts decimal session-duration strings"
+    },
+    {
+      "id": "leading-space-number",
+      "title": "[input] converts number strings with leading spaces"
+    },
+    {
+      "id": "invalid-days",
+      "title": "[input] surfaces invalid day strings as NaN"
+    },
+    {
+      "id": "invalid-duration",
+      "title": "[input] surfaces invalid duration strings as NaN"
+    },
+    {
+      "id": "bodyweight-profile",
+      "title": "[input] keeps calisthenics selections intact"
+    },
+    {
+      "id": "custom-split",
+      "title": "[input] keeps custom split selections intact"
+    },
+    {
+      "id": "newline-notes",
+      "title": "[input] trims multiline general notes without losing content"
+    }
+  ],
+  "planGenerationOutcomes": [
+    {
+      "id": "initial-plan-success",
+      "title": "[plan-route] creates version 1 when a profile exists",
+      "expected": "success"
+    },
+    {
+      "id": "next-plan-success",
+      "title": "[plan-route] increments the version from the latest plan",
+      "expected": "success"
+    },
+    {
+      "id": "missing-profile",
+      "title": "[plan-route] returns 404 when the user profile does not exist",
+      "expected": "failure"
+    },
+    {
+      "id": "ai-failure",
+      "title": "[plan-route] returns 500 when AI generation fails",
+      "expected": "failure"
+    },
+    {
+      "id": "unauthenticated",
+      "title": "[plan-route] rejects unauthenticated plan generation requests",
+      "expected": "failure"
+    }
+  ],
+  "performanceTargets": [
+    {
+      "id": "local-plan-route",
+      "title": "[perf] POST /api/plan/generate responds locally in under 1000ms",
+      "thresholdMs": 1000
+    }
+  ]
+}
