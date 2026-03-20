@@ -9,6 +9,7 @@ import Navbar from "./components/layout/Navbar"
 import { NeonAuthUIProvider } from '@neondatabase/neon-js/auth/react';
 import { authClient } from "./lib/auth";
 import AuthProvider from "./context/AuthContext";
+import { trackEvent } from "./lib/analytics";
 
 function RouteMetadata() {
   const location = useLocation();
@@ -35,6 +36,13 @@ function RouteMetadata() {
     }
 
     document.title = title;
+    trackEvent({
+      eventName: "page_view",
+      path: pathname,
+      properties: {
+        title,
+      },
+    });
   }, [location]);
 
   return null;

@@ -12,6 +12,7 @@ interface InvokeRequestOptions {
 interface InvokeResponse {
     status: number;
     body: unknown;
+    headers: Record<string, string | string[] | undefined>;
 }
 
 function parseBody(data: unknown) {
@@ -62,5 +63,6 @@ export async function invokeExpressRoute(
     return {
         status: res.statusCode,
         body: parseBody(res._getData()),
+        headers: res._getHeaders(),
     };
 }

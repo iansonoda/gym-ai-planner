@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { User, ProfileInput, RegeneratePlanInput, TrainingPlan } from "../types";
 import { authClient } from "@/lib/auth";
+import { trackEvent } from "@/lib/analytics";
 import { api } from "@/lib/api";
 import { AuthContext } from "./auth-context";
 
@@ -110,6 +111,15 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         }
 
         await api.saveProfile(profileData);
+        trackEvent({
+            eventName: "profile_saved",
+            path: "/onboarding",
+            properties: {
+                goal: profileData.goal,
+                experience: profileData.experience,
+                preferredSplit: profileData.preferredSplit,
+            },
+        });
         await refreshData();
     }
 
@@ -118,8 +128,37 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
             throw new Error("User must be logged in to generate plan");
         }
 
-        await api.generatePlan(input);
-        await refreshData();
+        const mode = input?.mode ?? "same";
+
+        trackEvent({
+            eventName: "plan_generation_requested",
+            path: "/profile",
+            properties: {
+                mode,
+            },
+        });
+
+        try {
+            await api.generatePlan(input);
+            trackEvent({
+                eventName: "plan_generation_succeeded",
+                path: "/profile",
+                properties: {
+                    mode,
+                },
+            });
+            await refreshData();
+        } catch (error) {
+            trackEvent({
+                eventName: "plan_generation_failed",
+                path: "/profile",
+                properties: {
+                    mode,
+                    message: error instanceof Error ? error.message : "Unknown error",
+                },
+            });
+            throw error;
+        }
     }
 
     return (

@@ -34,15 +34,17 @@ interface AuthPayload {
     [key: string]: unknown;
 }
 
-export interface AuthenticatedRequest extends Request {
-    auth: {
-        payload: AuthPayload;
-        token: string;
-        userId: string;
-    };
+export interface AuthContext {
+    payload: AuthPayload;
+    token: string;
+    userId: string;
 }
 
-function getBearerToken(authorization?: string) {
+export interface AuthenticatedRequest extends Request {
+    auth: AuthContext;
+}
+
+export function getBearerToken(authorization?: string) {
     if (!authorization) {
         return null;
     }
@@ -55,6 +57,45 @@ function getBearerToken(authorization?: string) {
     return token;
 }
 
+async function verifyToken(token: string, shouldLogErrors: boolean): Promise<AuthContext | null> {
+    if (!jwks) {
+        return null;
+    }
+
+    try {
+        const { payload } = await jwtVerify(token, jwks);
+
+        if (!payload || typeof payload.sub !== "string" || payload.sub.length === 0) {
+            return null;
+        }
+
+        return {
+            payload,
+            token,
+            userId: payload.sub,
+        };
+    } catch (error) {
+        if (shouldLogErrors) {
+            console.error("Error verifying auth token:", error);
+        }
+
+        return null;
+    }
+}
+
+export async function resolveOptionalAuth(req: Request): Promise<AuthContext | null> {
+    if (!jwks) {
+        return null;
+    }
+
+    const token = getBearerToken(req.header("authorization"));
+    if (!token) {
+        return null;
+    }
+
+    return verifyToken(token, false);
+}
+
 export async function requireAuth(req: Request, res: Response, next: NextFunction) {
     if (!jwks) {
         return res.status(500).json({ error: "Neon auth is not configured on the server" });
@@ -65,22 +106,11 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
         return res.status(401).json({ error: "Authentication required" });
     }
 
-    try {
-        const { payload } = await jwtVerify(token, jwks);
-
-        if (!payload || typeof payload.sub !== "string" || payload.sub.length === 0) {
-            return res.status(401).json({ error: "Invalid authentication token" });
-        }
-
-        (req as AuthenticatedRequest).auth = {
-            payload,
-            token,
-            userId: payload.sub,
-        };
-
-        next();
-    } catch (error) {
-        console.error("Error verifying auth token:", error);
+    const auth = await verifyToken(token, true);
+    if (!auth) {
         return res.status(401).json({ error: "Invalid or expired authentication token" });
     }
+
+    (req as AuthenticatedRequest).auth = auth;
+    next();
 }

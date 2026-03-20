@@ -1,15 +1,47 @@
 import { Router, type Request, type Response } from "express";
 import { getValidationErrorMessage, profileInputSchema } from "../../../shared/schemas";
 import { requireAuth, type AuthenticatedRequest } from "../lib/auth";
+import { recordServerEvent } from "../lib/analytics";
 import { prisma } from "../lib/prisma";
+import { getCacheKey, profileCache } from "../lib/server-runtime";
 
 export const profileRouter = Router();
 
 profileRouter.use(requireAuth);
 
 profileRouter.get("/", async (req: Request, res: Response) => {
+    const startedAt = performance.now();
+
     try {
         const { userId } = (req as AuthenticatedRequest).auth;
+        const cacheKey = getCacheKey(userId);
+        const cachedProfile = profileCache.get(cacheKey);
+
+        if (cachedProfile) {
+            res.setHeader("X-Cache", "HIT");
+            await recordServerEvent({
+                req,
+                eventName: "cache_hit",
+                startedAt,
+                properties: {
+                    cacheKey,
+                    cacheName: "profile",
+                    statusCode: 200,
+                },
+            });
+            return res.json(cachedProfile);
+        }
+
+        res.setHeader("X-Cache", "MISS");
+        await recordServerEvent({
+            req,
+            eventName: "cache_miss",
+            startedAt,
+            properties: {
+                cacheKey,
+                cacheName: "profile",
+            },
+        });
 
         const profile = await prisma.user_profiles.findUnique({
             where: { user_id: userId },
@@ -19,7 +51,7 @@ profileRouter.get("/", async (req: Request, res: Response) => {
             return res.status(404).json({ error: "User profile not found" });
         }
 
-        res.json({
+        const responseBody = {
             user_id: profile.user_id,
             goal: profile.goal,
             experience: profile.experience,
@@ -30,7 +62,11 @@ profileRouter.get("/", async (req: Request, res: Response) => {
             general_notes: profile.general_notes,
             preferred_split: profile.preferred_split,
             updated_at: profile.updated_at,
-        });
+        };
+
+        profileCache.set(cacheKey, responseBody);
+
+        res.json(responseBody);
     } catch (error) {
         console.error("Error fetching profile: ", error);
         return res.status(500).json({ error: "Failed to fetch profile" });
@@ -85,6 +121,8 @@ profileRouter.post("/", async (req: Request, res: Response) => {
                 preferred_split: preferredSplit,
             }
         });
+
+        profileCache.delete(getCacheKey(userId));
 
         res.json({ success: true });
         

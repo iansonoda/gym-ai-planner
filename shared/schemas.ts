@@ -134,6 +134,34 @@ export const regeneratePlanInputSchema = z.object({
     }, trimmedNotesSchema.optional()),
 });
 
+export const analyticsSourceSchema = z.enum(["client", "server"]);
+
+export const analyticsEventInputSchema = z.object({
+    eventName: z
+        .string()
+        .trim()
+        .min(1, "Event name is required.")
+        .max(100, "Event name must be under 100 characters."),
+    path: z.preprocess((value) => {
+        if (value === undefined || value === null) {
+            return undefined;
+        }
+
+        if (typeof value === "string") {
+            const trimmed = value.trim();
+            return trimmed.length > 0 ? trimmed : undefined;
+        }
+
+        return value;
+    }, z.string().max(500, "Path must be under 500 characters.").optional()),
+    sessionId: z
+        .string()
+        .trim()
+        .min(1, "Session ID is required.")
+        .max(120, "Session ID must be under 120 characters."),
+    properties: z.record(z.string(), z.unknown()).optional(),
+});
+
 function isRecord(value: unknown): value is Record<string, unknown> {
     return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -212,6 +240,8 @@ export type ProfileInput = z.infer<typeof profileInputSchema>;
 export type OnboardingFormData = z.input<typeof onboardingFormSchema>;
 export type UserProfileCore = z.infer<typeof userProfileCoreSchema>;
 export type RegeneratePlanInput = z.infer<typeof regeneratePlanInputSchema>;
+export type AnalyticsSource = z.infer<typeof analyticsSourceSchema>;
+export type AnalyticsEventInput = z.infer<typeof analyticsEventInputSchema>;
 export type RawAiPlanResponse = z.infer<typeof rawAiPlanResponseSchema>;
 
 export function getValidationErrorMessage(error: ZodError, fallback = "Invalid input.") {

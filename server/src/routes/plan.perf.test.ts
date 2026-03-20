@@ -17,6 +17,9 @@ vi.mock("../lib/prisma", () => ({
             findFirst: vi.fn(),
             create: vi.fn(),
         },
+        analytics_events: {
+            create: vi.fn(),
+        },
     },
 }));
 
@@ -42,14 +45,19 @@ vi.mock("../lib/auth", async () => {
 
             return next();
         }),
+        resolveOptionalAuth: vi.fn(async () => ({
+            payload: { sub: TEST_USER_ID },
+            token: "test-token",
+            userId: TEST_USER_ID,
+        })),
     };
 });
 
 import { createApp } from "../app";
 import { generateTrainingPlan } from "../lib/ai";
 import { prisma } from "../lib/prisma";
+import { resetServerRuntime } from "../lib/server-runtime";
 
-const app = createApp();
 const mockedGenerateTrainingPlan = vi.mocked(generateTrainingPlan);
 const mockedPrisma = prisma as {
     user_profiles: {
@@ -59,14 +67,19 @@ const mockedPrisma = prisma as {
         findFirst: ReturnType<typeof vi.fn>;
         create: ReturnType<typeof vi.fn>;
     };
+    analytics_events: {
+        create: ReturnType<typeof vi.fn>;
+    };
 };
 
 describe("plan route performance", () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        resetServerRuntime();
         mockedPrisma.user_profiles.findUnique.mockResolvedValue(profileFixtures.beginnerStrengthFullGym);
         mockedPrisma.training_plans.findFirst.mockResolvedValue(null);
         mockedGenerateTrainingPlan.mockResolvedValue(createGeneratedPlanFixture());
+        mockedPrisma.analytics_events.create.mockResolvedValue({ id: "analytics_1" });
         mockedPrisma.training_plans.create.mockResolvedValue({
             id: "plan_perf",
             user_id: TEST_USER_ID,
@@ -78,6 +91,7 @@ describe("plan route performance", () => {
     });
 
     it(performanceTargets[0].title, async () => {
+        const app = createApp();
         const startedAt = performance.now();
 
         const res = await invokeExpressRoute(app, {
