@@ -13,7 +13,7 @@ function createJsonResponse(body: unknown, ok = true) {
     return {
         ok,
         json: vi.fn().mockResolvedValue(body),
-    } as Response;
+    } as unknown as Response;
 }
 
 describe("api client", () => {

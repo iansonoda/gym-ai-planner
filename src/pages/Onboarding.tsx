@@ -9,8 +9,25 @@ import { ArrowRight, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { validateOnboardingProfile, type OnboardingFormData } from "@/lib/onboarding";
 import { api } from "@/lib/api";
+import type {
+    ProfileEquipment,
+    ProfileExperience,
+    ProfileGoal,
+    ProfilePreferredSplit,
+} from "@/types";
 
-const defaultFormData: OnboardingFormData = {
+interface OnboardingFormState {
+    goal: ProfileGoal;
+    experience: ProfileExperience;
+    daysPerWeek: string;
+    sessionDuration: string;
+    equipment: ProfileEquipment;
+    injuries: string;
+    generalNotes: string;
+    preferredSplit: ProfilePreferredSplit;
+}
+
+const defaultFormData: OnboardingFormState = {
     goal: "bulk",
     experience: "beginner",
     daysPerWeek: "2",
@@ -67,13 +84,13 @@ const splitOptions = [
 
 export default function Onboarding() {
     const { user, saveProfile, generatePlan} = useAuth();
-    const [formData, setFormData] = useState<OnboardingFormData>(defaultFormData);
+    const [formData, setFormData] = useState<OnboardingFormState>(defaultFormData);
     const [isGenerating, setIsGenerating] = useState(false);
     const [isLoadingProfile, setIsLoadingProfile] = useState(true);
     const [error, setError] = useState("");
     const navigate = useNavigate();
 
-    function updateForm(field: string, value: string) {
+    function updateForm<K extends keyof OnboardingFormState>(field: K, value: OnboardingFormState[K]) {
         setError("");
         setFormData((prev) => ({ ...prev, [field]: value }));
     }
@@ -110,7 +127,7 @@ export default function Onboarding() {
     async function handleQuestionnaire(e: React.SubmitEvent) {
         e.preventDefault();
 
-        const parsedProfile = validateOnboardingProfile(formData);
+        const parsedProfile = validateOnboardingProfile(formData as OnboardingFormData);
         if (!parsedProfile.success) {
             setError(parsedProfile.error.issues[0]?.message ?? "Please review your onboarding answers.");
             return;
@@ -152,14 +169,14 @@ export default function Onboarding() {
                                 label="What's your primary goal?" 
                                 options={goalOptions} 
                                 value={formData.goal}
-                                onChange={(e) => updateForm("goal", e.target.value)}
+                                onChange={(e) => updateForm("goal", e.target.value as ProfileGoal)}
                             />
                             <Select 
                                 id="experience" 
                                 label="How experienced are you?" 
                                 options={experience} 
                                 value={formData.experience}
-                                onChange={(e) => updateForm("experience", e.target.value)}
+                                onChange={(e) => updateForm("experience", e.target.value as ProfileExperience)}
                             />
                             <div className="grid grid-cols-2 gap-4">
                             <Select 
@@ -182,14 +199,14 @@ export default function Onboarding() {
                                 label="Equipment Access" 
                                 options={equipmentOptions} 
                                 value={formData.equipment}
-                                onChange={(e) => updateForm("equipment", e.target.value)}
+                                onChange={(e) => updateForm("equipment", e.target.value as ProfileEquipment)}
                             />
                             <Select 
                                 id="preferredSplit" 
                                 label="Preferred Split" 
                                 options={splitOptions}
                                 value={formData.preferredSplit}
-                                onChange={(e) => updateForm("preferredSplit", e.target.value)}
+                                onChange={(e) => updateForm("preferredSplit", e.target.value as ProfilePreferredSplit)}
                             />
 
                             <Textarea

@@ -24,10 +24,6 @@ export default defineConfig({
       "server/src/**/*.perf.test.ts",
     ],
     environment: "node",
-    environmentMatchGlobs: [
-      ["src/**/*.unit.test.ts", "jsdom"],
-      ["src/**/*.unit.test.tsx", "jsdom"],
-    ],
     setupFiles: ["./test/setup/vitest.setup.ts"],
     coverage: {
       provider: "v8",
