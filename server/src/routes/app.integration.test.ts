@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { planGenerationOutcomes, userScenarios } from "../../../test/fixtures/scenarios";
+import {
+    planGenerationOutcomes,
+    requestValidationOutcomes,
+    userScenarios,
+} from "../../../test/fixtures/scenarios";
 import { invokeExpressRoute } from "../../../test/helpers/express-test-utils";
 import {
     createAuthenticatedHeaders,
@@ -122,6 +126,28 @@ describe("profile routes", () => {
             goal: "strength",
             days_per_week: 4,
         });
+    });
+
+    it(requestValidationOutcomes[0].title, async () => {
+        const res = await invokeExpressRoute(app, {
+            method: "POST",
+            url: "/api/profile",
+            headers: createAuthenticatedHeaders(),
+            body: {
+                goal: "marathon",
+                experience: "intermediate",
+                daysPerWeek: 4,
+                sessionDuration: 60,
+                equipment: "full_gym",
+                injuries: "",
+                generalNotes: "",
+                preferredSplit: "upper_lower",
+            },
+        });
+
+        expect(res.status).toBe(400);
+        expect(res.body).toEqual({ error: "Invalid option: expected one of \"cut\"|\"bulk\"|\"recomp\"|\"strength\"|\"endurance\"" });
+        expect(mockedPrisma.user_profiles.upsert).not.toHaveBeenCalled();
     });
 });
 
@@ -250,6 +276,32 @@ describe("plan routes", () => {
 
         expect(res.status).toBe(401);
         expect(res.body).toEqual({ error: "Authentication required" });
+    });
+
+    it(planGenerationOutcomes[5].title, async () => {
+        const res = await invokeExpressRoute(app, {
+            method: "POST",
+            url: "/api/plan/generate",
+            headers: createAuthenticatedHeaders(),
+            body: { mode: "swap" },
+        });
+
+        expect(res.status).toBe(400);
+        expect(res.body).toEqual({ error: "Invalid option: expected one of \"same\"|\"update\"|\"change\"" });
+        expect(mockedGenerateTrainingPlan).not.toHaveBeenCalled();
+    });
+
+    it(requestValidationOutcomes[1].title, async () => {
+        const res = await invokeExpressRoute(app, {
+            method: "POST",
+            url: "/api/plan/generate",
+            headers: createAuthenticatedHeaders(),
+            body: { mode: "swap" },
+        });
+
+        expect(res.status).toBe(400);
+        expect(res.body).toEqual({ error: "Invalid option: expected one of \"same\"|\"update\"|\"change\"" });
+        expect(mockedGenerateTrainingPlan).not.toHaveBeenCalled();
     });
 
     it("fetches the current plan when one exists", async () => {

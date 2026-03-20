@@ -1,20 +1,12 @@
-export interface UserProfile {
-    goal: string;
-    experience: string;
-    days_per_week: number;
-    session_duration: number;
-    equipment: string;
-    injuries?: string | null;
-    general_notes?: string | null;
-    preferred_split: string;
-}
+import type {
+    RegeneratePlanInput as SharedRegeneratePlanInput,
+    RegeneratePlanMode,
+    UserProfileCore,
+} from "../../shared/schemas";
 
-export type RegeneratePlanMode = "same" | "update" | "change";
-
-export interface RegeneratePlanRequest {
-    mode?: RegeneratePlanMode;
-    notes?: string;
-}
+export type UserProfile = UserProfileCore;
+export type RegeneratePlanRequest = SharedRegeneratePlanInput;
+export type { RegeneratePlanMode };
 
 export interface PlanOverview {
     goal: string;

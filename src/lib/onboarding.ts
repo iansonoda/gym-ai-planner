@@ -1,25 +1,17 @@
+import { getValidationErrorMessage, onboardingFormSchema, type OnboardingFormData } from "../../shared/schemas";
 import type { ProfileInput } from "../types";
 
-export interface OnboardingFormData {
-    goal: string;
-    experience: string;
-    daysPerWeek: string;
-    sessionDuration: string;
-    equipment: string;
-    injuries: string;
-    generalNotes: string;
-    preferredSplit: string;
-}
+export type { OnboardingFormData } from "../../shared/schemas";
 
 export function normalizeOnboardingProfile(formData: OnboardingFormData): ProfileInput {
-    return {
-        goal: formData.goal,
-        experience: formData.experience,
-        daysPerWeek: Number(formData.daysPerWeek),
-        sessionDuration: Number(formData.sessionDuration),
-        equipment: formData.equipment,
-        injuries: formData.injuries.trim(),
-        generalNotes: formData.generalNotes.trim(),
-        preferredSplit: formData.preferredSplit,
-    };
+    return onboardingFormSchema.parse(formData);
+}
+
+export function validateOnboardingProfile(formData: OnboardingFormData) {
+    return onboardingFormSchema.safeParse(formData);
+}
+
+export function getOnboardingValidationError(formData: OnboardingFormData) {
+    const result = validateOnboardingProfile(formData);
+    return result.success ? null : getValidationErrorMessage(result.error, "Please review your onboarding answers.");
 }

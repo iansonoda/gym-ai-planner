@@ -1,4 +1,5 @@
 import { Router, type Request, type Response } from "express";
+import { getValidationErrorMessage, profileInputSchema } from "../../../shared/schemas";
 import { requireAuth, type AuthenticatedRequest } from "../lib/auth";
 import { prisma } from "../lib/prisma";
 
@@ -39,7 +40,13 @@ profileRouter.get("/", async (req: Request, res: Response) => {
 profileRouter.post("/", async (req: Request, res: Response) => {
     try {
         const { userId } = (req as AuthenticatedRequest).auth;
-        const profileData = req.body;
+        const parsedProfile = profileInputSchema.safeParse(req.body);
+
+        if (!parsedProfile.success) {
+            return res.status(400).json({
+                error: getValidationErrorMessage(parsedProfile.error, "Invalid profile input."),
+            });
+        }
 
         const {
             goal,
@@ -50,18 +57,7 @@ profileRouter.post("/", async (req: Request, res: Response) => {
             injuries,
             generalNotes,
             preferredSplit,
-        } = profileData;
-
-        if (
-            !goal ||
-            !experience ||
-            !daysPerWeek ||
-            !sessionDuration ||
-            !equipment ||
-            !preferredSplit
-        ) {
-            return res.status(400).json({ error: "Missing required fields" });
-        }
+        } = parsedProfile.data;
 
 
         await prisma.user_profiles.upsert({
@@ -72,8 +68,8 @@ profileRouter.post("/", async (req: Request, res: Response) => {
                 days_per_week: daysPerWeek,
                 session_duration: sessionDuration,
                 equipment,
-                injuries: injuries || null,
-                general_notes: generalNotes || null,
+                injuries: injuries.length > 0 ? injuries : null,
+                general_notes: generalNotes.length > 0 ? generalNotes : null,
                 preferred_split: preferredSplit,
                 updated_at: new Date(),
             },
@@ -84,8 +80,8 @@ profileRouter.post("/", async (req: Request, res: Response) => {
                 days_per_week: daysPerWeek,
                 session_duration: sessionDuration,
                 equipment,
-                injuries: injuries || null,
-                general_notes: generalNotes || null,
+                injuries: injuries.length > 0 ? injuries : null,
+                general_notes: generalNotes.length > 0 ? generalNotes : null,
                 preferred_split: preferredSplit,
             }
         });

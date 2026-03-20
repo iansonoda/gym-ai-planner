@@ -36,6 +36,12 @@ const planGenerationPassRate = planGenerationCount === 0
   ? 0
   : Number(((passedPlanGeneration / planGenerationCount) * 100).toFixed(1));
 
+const requestValidationCount = matrix.requestValidationOutcomes.length;
+const passedRequestValidation = countPassed(matrix.requestValidationOutcomes, assertions);
+
+const aiValidationCount = matrix.aiValidationOutcomes.length;
+const passedAiValidation = countPassed(matrix.aiValidationOutcomes, assertions);
+
 const performanceSummaries = matrix.performanceTargets.map((target) => {
   const assertion = assertions.find((item) => item.name === target.title);
   const matchingAssertion = assertions.find((item) => item.title === target.title);
@@ -65,6 +71,14 @@ const summary = {
     expectedFailureCount,
     passRate: planGenerationPassRate,
   },
+  requestValidationOutcomes: {
+    passed: passedRequestValidation,
+    total: requestValidationCount,
+  },
+  aiValidationOutcomes: {
+    passed: passedAiValidation,
+    total: aiValidationCount,
+  },
   performanceTargets: performanceSummaries,
 };
 
@@ -80,6 +94,8 @@ console.log(
   expectedFailureCount,
   planGenerationPassRate.toFixed(1),
 );
+console.log("TEST_METRICS request_validation_cases=%d/%d", passedRequestValidation, requestValidationCount);
+console.log("TEST_METRICS ai_validation_cases=%d/%d", passedAiValidation, aiValidationCount);
 
 for (const target of performanceSummaries) {
   const observed = target.observedMs === null ? "unavailable" : `${target.observedMs.toFixed(2)}ms`;

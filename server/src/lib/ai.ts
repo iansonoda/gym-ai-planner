@@ -1,5 +1,10 @@
 import OpenAI from "openai";
 import dotenv from "dotenv";
+import {
+    normalizedUserProfileSchema,
+    rawAiPlanResponseSchema,
+    type RawAiPlanResponse,
+} from "../../../shared/schemas";
 import { RegeneratePlanMode, TrainingPlan, UserProfile } from "../../types";
 
 dotenv.config();
@@ -12,69 +17,13 @@ interface GeneratePlanOptions {
     previousPlan?: unknown;
 }
 
-interface RawAiOverview {
-    goal?: string;
-    frequency?: string;
-    split?: string;
-    notes?: string;
-}
-
-interface RawAiExercise {
-    name?: string;
-    sets?: number;
-    reps?: string;
-    rest?: string;
-    rpe?: number;
-    notes?: string;
-    alternatives?: string[];
-}
-
-interface RawAiDay {
-    day?: string;
-    focus?: string;
-    exercises?: RawAiExercise[];
-}
-
-interface RawAiPlanResponse {
-    overview?: RawAiOverview;
-    weeklySchedule?: RawAiDay[];
-    progression?: string;
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-    return typeof value === "object" && value !== null;
-}
-
-function getString(value: unknown, fallback: string) {
-    return typeof value === "string" && value.length > 0 ? value : fallback;
-}
-
-function getNumber(value: unknown, fallback: number) {
-    return typeof value === "number" ? value : fallback;
-}
-
-function getStringArray(value: unknown): string[] {
-    return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
-}
-
 export function normalizeProfile(profile: UserProfile | Record<string, unknown>): UserProfile {
-    const source = isRecord(profile) ? profile : {};
-
-    return {
-        goal: getString(source.goal, "bulk"),
-        experience: getString(source.experience, "beginner"),
-        days_per_week: getNumber(source.days_per_week, 4),
-        session_duration: getNumber(source.session_duration, 60),
-        equipment: getString(source.equipment, "full_gym"),
-        injuries: typeof source.injuries === "string" ? source.injuries : null,
-        general_notes: typeof source.general_notes === "string" ? source.general_notes : null,
-        preferred_split: getString(source.preferred_split, "upper_lower"),
-    };
+    return normalizedUserProfileSchema.parse(profile);
 }
 
 export function parseAiPlanResponse(content: string): RawAiPlanResponse {
     const parsed = JSON.parse(content) as unknown;
-    return isRecord(parsed) ? parsed as RawAiPlanResponse : {};
+    return rawAiPlanResponseSchema.parse(parsed);
 }
 
 export async function generateTrainingPlan(
@@ -136,6 +85,10 @@ export async function generateTrainingPlan(
         return formatPlanResponse(planData, normalizedProfile);
     } catch (error) {
         console.error("[AI] Error generating plan:", error);
+        if (error instanceof SyntaxError) {
+            throw new Error("AI provider returned invalid JSON");
+        }
+
         throw new Error("Failed to generate training plan");
     }
 }
@@ -158,7 +111,7 @@ export function formatPlanResponse(aiResponse: RawAiPlanResponse, profile: UserP
                 rest: exercise.rest || "60s",
                 rpe: exercise.rpe || 8,
                 notes: exercise.notes || "",
-                alternatives: getStringArray(exercise.alternatives),
+                alternatives: exercise.alternatives || [],
             })),
         })),
         progression: aiResponse.progression || "Increase weight by 2.5-5lbs (1-2.5kg) when you can complete all sets with good form. Track your progress weekly.",

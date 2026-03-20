@@ -107,7 +107,57 @@ describe("AI response parsing and formatting", () => {
         expect(formatted.progression).toContain("Increase weight by 2.5-5lbs");
     });
 
-    it("parses valid JSON content and throws on invalid JSON", () => {
+    it("[ai-validation] malformed nested AI types are repaired into safe fallback values", () => {
+        const formatted = formatPlanResponse(
+            parseAiPlanResponse(JSON.stringify({
+                overview: {
+                    goal: 42,
+                    split: false,
+                },
+                weeklySchedule: [
+                    {
+                        day: ["Monday"],
+                        focus: null,
+                        exercises: [
+                            {
+                                name: 123,
+                                sets: "4",
+                                reps: 6,
+                                rest: {},
+                                rpe: "8",
+                                notes: ["slow eccentric"],
+                                alternatives: ["Push-Up", 2, "", "Machine Press"],
+                            },
+                        ],
+                    },
+                ],
+                progression: false,
+            })),
+            baseProfile,
+        );
+
+        expect(formatted.overview.goal).toBe("Customized strength program");
+        expect(formatted.overview.split).toBe("upper_lower");
+        expect(formatted.weeklySchedule[0]).toMatchObject({
+            day: "Day",
+            focus: "Full Body",
+        });
+        expect(formatted.weeklySchedule[0].exercises[0]).toMatchObject({
+            name: "Exercise",
+            sets: 3,
+            reps: "10-12",
+            rest: "60s",
+            rpe: 8,
+            notes: "",
+            alternatives: ["Push-Up", "Machine Press"],
+        });
+    });
+
+    it("[ai-validation] invalid JSON content throws a provider response error", () => {
+        expect(() => parseAiPlanResponse("{")).toThrow();
+    });
+
+    it("parses valid JSON content", () => {
         expect(
             parseAiPlanResponse(
                 JSON.stringify({
@@ -119,7 +169,5 @@ describe("AI response parsing and formatting", () => {
             overview: { goal: "Strength" },
             weeklySchedule: [],
         });
-
-        expect(() => parseAiPlanResponse("{")).toThrow();
     });
 });

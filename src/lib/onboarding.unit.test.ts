@@ -6,7 +6,7 @@ import { normalizeOnboardingProfile, type OnboardingFormData } from "./onboardin
 interface NormalizationCase {
     title: string;
     input: OnboardingFormData;
-    expected: {
+    expected?: {
         goal: string;
         experience: string;
         daysPerWeek: number;
@@ -16,6 +16,7 @@ interface NormalizationCase {
         generalNotes: string;
         preferredSplit: string;
     };
+    expectedError?: string;
 }
 
 const baseInput: OnboardingFormData = {
@@ -70,40 +71,28 @@ const cases: NormalizationCase[] = [
         },
     },
     {
-        title: "[input] converts a zero day-per-week string into a number",
+        title: "[input] rejects a zero day-per-week string during schema validation",
         input: {
             ...baseInput,
             daysPerWeek: "0",
         },
-        expected: {
-            ...baseInput,
-            daysPerWeek: 0,
-            sessionDuration: 60,
-        },
+        expectedError: "Select a valid days-per-week option.",
     },
     {
-        title: "[input] converts a zero session-duration string into a number",
+        title: "[input] rejects a zero session-duration string during schema validation",
         input: {
             ...baseInput,
             sessionDuration: "0",
         },
-        expected: {
-            ...baseInput,
-            daysPerWeek: 4,
-            sessionDuration: 0,
-        },
+        expectedError: "Select a valid session-duration option.",
     },
     {
-        title: "[input] converts decimal session-duration strings",
+        title: "[input] rejects decimal session-duration strings during schema validation",
         input: {
             ...baseInput,
             sessionDuration: "45.5",
         },
-        expected: {
-            ...baseInput,
-            daysPerWeek: 4,
-            sessionDuration: 45.5,
-        },
+        expectedError: "Select a valid session-duration option.",
     },
     {
         title: "[input] converts number strings with leading spaces",
@@ -119,28 +108,20 @@ const cases: NormalizationCase[] = [
         },
     },
     {
-        title: "[input] surfaces invalid day strings as NaN",
+        title: "[input] rejects invalid day strings during schema validation",
         input: {
             ...baseInput,
             daysPerWeek: "abc",
         },
-        expected: {
-            ...baseInput,
-            daysPerWeek: Number.NaN,
-            sessionDuration: 60,
-        },
+        expectedError: "Select a valid days-per-week option.",
     },
     {
-        title: "[input] surfaces invalid duration strings as NaN",
+        title: "[input] rejects invalid duration strings during schema validation",
         input: {
             ...baseInput,
             sessionDuration: "sixty",
         },
-        expected: {
-            ...baseInput,
-            daysPerWeek: 4,
-            sessionDuration: Number.NaN,
-        },
+        expectedError: "Select a valid session-duration option.",
     },
     {
         title: "[input] keeps calisthenics selections intact",
@@ -186,26 +167,22 @@ const cases: NormalizationCase[] = [
 describe("normalizeOnboardingProfile", () => {
     for (const testCase of cases) {
         it(testCase.title, () => {
+            if (testCase.expectedError) {
+                expect(() => normalizeOnboardingProfile(testCase.input)).toThrow(testCase.expectedError);
+                return;
+            }
+
             const normalized = normalizeOnboardingProfile(testCase.input);
+            const expected = testCase.expected!;
 
-            expect(normalized.goal).toBe(testCase.expected.goal);
-            expect(normalized.experience).toBe(testCase.expected.experience);
-            expect(normalized.equipment).toBe(testCase.expected.equipment);
-            expect(normalized.injuries).toBe(testCase.expected.injuries);
-            expect(normalized.generalNotes).toBe(testCase.expected.generalNotes);
-            expect(normalized.preferredSplit).toBe(testCase.expected.preferredSplit);
-
-            if (Number.isNaN(testCase.expected.daysPerWeek)) {
-                expect(Number.isNaN(normalized.daysPerWeek)).toBe(true);
-            } else {
-                expect(normalized.daysPerWeek).toBe(testCase.expected.daysPerWeek);
-            }
-
-            if (Number.isNaN(testCase.expected.sessionDuration)) {
-                expect(Number.isNaN(normalized.sessionDuration)).toBe(true);
-            } else {
-                expect(normalized.sessionDuration).toBe(testCase.expected.sessionDuration);
-            }
+            expect(normalized.goal).toBe(expected.goal);
+            expect(normalized.experience).toBe(expected.experience);
+            expect(normalized.equipment).toBe(expected.equipment);
+            expect(normalized.injuries).toBe(expected.injuries);
+            expect(normalized.generalNotes).toBe(expected.generalNotes);
+            expect(normalized.preferredSplit).toBe(expected.preferredSplit);
+            expect(normalized.daysPerWeek).toBe(expected.daysPerWeek);
+            expect(normalized.sessionDuration).toBe(expected.sessionDuration);
         });
     }
 });

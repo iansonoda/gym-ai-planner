@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { normalizeOnboardingProfile, type OnboardingFormData } from "@/lib/onboarding";
+import { validateOnboardingProfile, type OnboardingFormData } from "@/lib/onboarding";
 import { api } from "@/lib/api";
 
 const defaultFormData: OnboardingFormData = {
@@ -74,6 +74,7 @@ export default function Onboarding() {
     const navigate = useNavigate();
 
     function updateForm(field: string, value: string) {
+        setError("");
         setFormData((prev) => ({ ...prev, [field]: value }));
     }
 
@@ -109,7 +110,13 @@ export default function Onboarding() {
     async function handleQuestionnaire(e: React.SubmitEvent) {
         e.preventDefault();
 
-        const profile = normalizeOnboardingProfile(formData);
+        const parsedProfile = validateOnboardingProfile(formData);
+        if (!parsedProfile.success) {
+            setError(parsedProfile.error.issues[0]?.message ?? "Please review your onboarding answers.");
+            return;
+        }
+
+        const profile = parsedProfile.data;
         try {
             await saveProfile(profile);
             setIsGenerating(true);

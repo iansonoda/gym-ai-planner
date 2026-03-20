@@ -1,4 +1,5 @@
 import { Router, type Request, type Response } from "express";
+import { getValidationErrorMessage, regeneratePlanInputSchema } from "../../../shared/schemas";
 import { Prisma } from "../../generated/prisma/client";
 import { requireAuth, type AuthenticatedRequest } from "../lib/auth";
 import { prisma } from "../lib/prisma";
@@ -12,7 +13,15 @@ planRouter.use(requireAuth);
 planRouter.post("/generate", async (req: Request, res: Response) => {
     try {
         const { userId } = (req as AuthenticatedRequest).auth;
-        const { mode, notes } = (req.body ?? {}) as RegeneratePlanRequest;
+        const parsedInput = regeneratePlanInputSchema.safeParse(req.body ?? {});
+
+        if (!parsedInput.success) {
+            return res.status(400).json({
+                error: getValidationErrorMessage(parsedInput.error, "Invalid plan regeneration request."),
+            });
+        }
+
+        const { mode, notes } = parsedInput.data as RegeneratePlanRequest;
 
         const profile = await prisma.user_profiles.findUnique({
             where: {user_id: userId}

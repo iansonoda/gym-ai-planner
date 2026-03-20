@@ -24,9 +24,18 @@ export interface PerformanceTargetDefinition {
     thresholdMs: number;
 }
 
+export interface ValidationOutcomeDefinition {
+    id: string;
+    title: string;
+}
+
 export const userScenarios = scenarioMatrix.userScenarios as UserScenarioDefinition[];
 export const inputCombinations = scenarioMatrix.inputCombinations as InputCombinationDefinition[];
 export const planGenerationOutcomes =
     scenarioMatrix.planGenerationOutcomes as PlanGenerationOutcomeDefinition[];
+export const requestValidationOutcomes =
+    scenarioMatrix.requestValidationOutcomes as ValidationOutcomeDefinition[];
+export const aiValidationOutcomes =
+    scenarioMatrix.aiValidationOutcomes as ValidationOutcomeDefinition[];
 export const performanceTargets =
     scenarioMatrix.performanceTargets as PerformanceTargetDefinition[];

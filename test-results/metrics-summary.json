@@ -8,18 +8,26 @@
     "total": 12
   },
   "planGenerationOutcomes": {
-    "passed": 5,
-    "total": 5,
+    "passed": 6,
+    "total": 6,
     "expectedSuccessCount": 2,
-    "expectedFailureCount": 3,
+    "expectedFailureCount": 4,
     "passRate": 100
+  },
+  "requestValidationOutcomes": {
+    "passed": 2,
+    "total": 2
+  },
+  "aiValidationOutcomes": {
+    "passed": 2,
+    "total": 2
   },
   "performanceTargets": [
     {
       "id": "local-plan-route",
       "title": "[perf] POST /api/plan/generate responds locally in under 1000ms",
       "thresholdMs": 1000,
-      "observedMs": 5.075290999999993,
+      "observedMs": 5.288083000000029,
       "passed": true
     }
   ]

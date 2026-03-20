@@ -56,15 +56,15 @@
     },
     {
       "id": "zero-day-value",
-      "title": "[input] converts a zero day-per-week string into a number"
+      "title": "[input] rejects a zero day-per-week string during schema validation"
     },
     {
       "id": "zero-duration-value",
-      "title": "[input] converts a zero session-duration string into a number"
+      "title": "[input] rejects a zero session-duration string during schema validation"
     },
     {
       "id": "decimal-duration",
-      "title": "[input] converts decimal session-duration strings"
+      "title": "[input] rejects decimal session-duration strings during schema validation"
     },
     {
       "id": "leading-space-number",
@@ -72,11 +72,11 @@
     },
     {
       "id": "invalid-days",
-      "title": "[input] surfaces invalid day strings as NaN"
+      "title": "[input] rejects invalid day strings during schema validation"
     },
     {
       "id": "invalid-duration",
-      "title": "[input] surfaces invalid duration strings as NaN"
+      "title": "[input] rejects invalid duration strings during schema validation"
     },
     {
       "id": "bodyweight-profile",
@@ -116,6 +116,31 @@
       "id": "unauthenticated",
       "title": "[plan-route] rejects unauthenticated plan generation requests",
       "expected": "failure"
+    },
+    {
+      "id": "invalid-mode",
+      "title": "[plan-route] rejects invalid regenerate mode values with 400",
+      "expected": "failure"
+    }
+  ],
+  "requestValidationOutcomes": [
+    {
+      "id": "invalid-profile-goal",
+      "title": "[validation] POST /api/profile rejects invalid goal values with 400"
+    },
+    {
+      "id": "invalid-regenerate-mode",
+      "title": "[validation] POST /api/plan/generate rejects invalid mode values before AI generation"
+    }
+  ],
+  "aiValidationOutcomes": [
+    {
+      "id": "invalid-json",
+      "title": "[ai-validation] invalid JSON content throws a provider response error"
+    },
+    {
+      "id": "nested-fallback",
+      "title": "[ai-validation] malformed nested AI types are repaired into safe fallback values"
     }
   ],
   "performanceTargets": [
