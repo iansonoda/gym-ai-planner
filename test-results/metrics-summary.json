@@ -27,7 +27,7 @@
       "id": "local-plan-route",
       "title": "[perf] POST /api/plan/generate responds locally in under 1000ms",
       "thresholdMs": 1000,
-      "observedMs": 5.288083000000029,
+      "observedMs": 6.238709,
       "passed": true
     }
   ]
