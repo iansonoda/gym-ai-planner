@@ -2,12 +2,7 @@
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("./auth", () => ({
-    getAuthToken: vi.fn(),
-}));
-
 import { api } from "./api";
-import { getAuthToken } from "./auth";
 
 function createJsonResponse(body: unknown, ok = true) {
     return {
@@ -20,11 +15,9 @@ describe("api client", () => {
     beforeEach(() => {
         vi.clearAllMocks();
         vi.stubGlobal("fetch", vi.fn());
-        vi.mocked(getAuthToken).mockResolvedValue(null);
     });
 
-    it("adds the bearer token when authentication is available", async () => {
-        vi.mocked(getAuthToken).mockResolvedValue("token-123");
+    it("sends profile requests with cookie credentials", async () => {
         vi.mocked(fetch).mockResolvedValue(createJsonResponse({ success: true }));
 
         await api.saveProfile({
@@ -42,25 +35,23 @@ describe("api client", () => {
             "http://localhost:3001/api/profile",
             expect.objectContaining({
                 method: "POST",
-                headers: expect.objectContaining({
-                    Authorization: "Bearer token-123",
+                credentials: "include",
+                headers: {
                     "Content-Type": "application/json",
-                }),
+                },
             }),
         );
     });
 
-    it("omits the authorization header when no auth token exists", async () => {
+    it("sends GET requests with cookie credentials", async () => {
         vi.mocked(fetch).mockResolvedValue(createJsonResponse({ id: "plan_1" }));
 
-        await api.generatePlan();
+        await api.getCurrentPlan();
 
         expect(fetch).toHaveBeenCalledWith(
-            "http://localhost:3001/api/plan/generate",
+            "http://localhost:3001/api/plan/current",
             expect.objectContaining({
-                headers: {
-                    "Content-Type": "application/json",
-                },
+                credentials: "include",
             }),
         );
     });
