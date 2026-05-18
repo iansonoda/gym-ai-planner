@@ -6,6 +6,7 @@ import { findOrCreateOAuthUser, type AppUser } from "../lib/oauth";
 import { prisma } from "../lib/prisma";
 
 export const authRouter = Router();
+let sessionSerializationConfigured = false;
 
 function requireEnv(name: string) {
   const value = process.env[name];
@@ -42,82 +43,101 @@ function mapDatabaseUser(user: { id: string; email: string; name: string | null;
   };
 }
 
+function hasOAuthEnv(provider: "google" | "github") {
+  const prefix = provider.toUpperCase();
+  return Boolean(
+    process.env[`${prefix}_CLIENT_ID`] &&
+      process.env[`${prefix}_CLIENT_SECRET`] &&
+      process.env.API_BASE_URL,
+  );
+}
+
 export function configurePassport() {
-  passport.serializeUser((user, done) => {
-    done(null, (user as AppUser).id);
-  });
+  if (!sessionSerializationConfigured) {
+    passport.serializeUser((user, done) => {
+      done(null, (user as AppUser).id);
+    });
 
-  passport.deserializeUser(async (id: string, done) => {
-    try {
-      const user = await prisma.users.findUnique({ where: { id } });
+    passport.deserializeUser(async (id: string, done) => {
+      try {
+        const user = await prisma.users.findUnique({ where: { id } });
 
-      if (!user) {
-        return done(null, false);
+        if (!user) {
+          return done(null, false);
+        }
+
+        return done(null, mapDatabaseUser(user));
+      } catch (error) {
+        return done(error);
       }
+    });
+    sessionSerializationConfigured = true;
+  }
 
-      return done(null, mapDatabaseUser(user));
-    } catch (error) {
-      return done(error);
-    }
-  });
+  if (hasOAuthEnv("google")) {
+    passport.use(
+      new GoogleStrategy(
+        {
+          clientID: requireEnv("GOOGLE_CLIENT_ID"),
+          clientSecret: requireEnv("GOOGLE_CLIENT_SECRET"),
+          callbackURL: `${apiBaseUrl()}/api/auth/google/callback`,
+          state: true,
+        },
+        async (_accessToken, _refreshToken, profile, done) => {
+          try {
+            const email = profile.emails?.[0]?.value ?? null;
+            const emailVerified = profile.emails?.[0]?.verified === true;
+            const user = await findOrCreateOAuthUser({
+              provider: "google",
+              providerAccountId: profile.id,
+              email,
+              emailVerified,
+              name: profile.displayName ?? null,
+              avatarUrl: profile.photos?.[0]?.value ?? null,
+            });
 
-  passport.use(
-    new GoogleStrategy(
-      {
-        clientID: requireEnv("GOOGLE_CLIENT_ID"),
-        clientSecret: requireEnv("GOOGLE_CLIENT_SECRET"),
-        callbackURL: `${apiBaseUrl()}/api/auth/google/callback`,
-      },
-      async (_accessToken, _refreshToken, profile, done) => {
-        try {
-          const email = profile.emails?.[0]?.value ?? null;
-          const emailVerified = profile.emails?.[0]?.verified === true;
-          const user = await findOrCreateOAuthUser({
-            provider: "google",
-            providerAccountId: profile.id,
-            email,
-            emailVerified,
-            name: profile.displayName ?? null,
-            avatarUrl: profile.photos?.[0]?.value ?? null,
-          });
+            return done(null, user);
+          } catch (error) {
+            return done(error as Error);
+          }
+        },
+      ),
+    );
+  }
 
-          return done(null, user);
-        } catch (error) {
-          return done(error as Error);
-        }
-      },
-    ),
-  );
+  if (hasOAuthEnv("github")) {
+    passport.use(
+      new GitHubStrategy(
+        {
+          clientID: requireEnv("GITHUB_CLIENT_ID"),
+          clientSecret: requireEnv("GITHUB_CLIENT_SECRET"),
+          callbackURL: `${apiBaseUrl()}/api/auth/github/callback`,
+          scope: ["user:email"],
+          allRawEmails: true,
+          state: true as unknown as string,
+        },
+        async (_accessToken: string, _refreshToken: string, profile: any, done: any) => {
+          try {
+            const emailRecord =
+              profile.emails?.find((item: { value?: string; verified?: boolean }) => item.verified) ??
+              profile.emails?.[0];
+            const user = await findOrCreateOAuthUser({
+              provider: "github",
+              providerAccountId: profile.id,
+              email: emailRecord?.value ?? null,
+              emailVerified: emailRecord?.verified === true,
+              name: profile.displayName ?? profile.username ?? null,
+              avatarUrl: profile.photos?.[0]?.value ?? null,
+            });
 
-  passport.use(
-    new GitHubStrategy(
-      {
-        clientID: requireEnv("GITHUB_CLIENT_ID"),
-        clientSecret: requireEnv("GITHUB_CLIENT_SECRET"),
-        callbackURL: `${apiBaseUrl()}/api/auth/github/callback`,
-        scope: ["user:email"],
-      },
-      async (_accessToken: string, _refreshToken: string, profile: any, done: any) => {
-        try {
-          const emailRecord =
-            profile.emails?.find((item: { value?: string; verified?: boolean }) => item.verified) ??
-            profile.emails?.[0];
-          const user = await findOrCreateOAuthUser({
-            provider: "github",
-            providerAccountId: profile.id,
-            email: emailRecord?.value ?? null,
-            emailVerified: emailRecord?.verified === true,
-            name: profile.displayName ?? profile.username ?? null,
-            avatarUrl: profile.photos?.[0]?.value ?? null,
-          });
-
-          return done(null, user);
-        } catch (error) {
-          return done(error as Error);
-        }
-      },
-    ),
-  );
+            return done(null, user);
+          } catch (error) {
+            return done(error as Error);
+          }
+        },
+      ),
+    );
+  }
 }
 
 authRouter.get("/me", async (req: Request, res: Response) => {
@@ -143,19 +163,21 @@ authRouter.get("/me", async (req: Request, res: Response) => {
 authRouter.get("/google", passport.authenticate("google", { scope: ["profile", "email"] }));
 authRouter.get(
   "/google/callback",
-  passport.authenticate("google", {
-    failureRedirect: authFailureRedirect(),
-    successRedirect: authSuccessRedirect(),
-  }),
+  (req: Request, res: Response, next) =>
+    passport.authenticate("google", {
+      failureRedirect: authFailureRedirect(),
+      successRedirect: authSuccessRedirect(),
+    })(req, res, next),
 );
 
 authRouter.get("/github", passport.authenticate("github", { scope: ["user:email"] }));
 authRouter.get(
   "/github/callback",
-  passport.authenticate("github", {
-    failureRedirect: authFailureRedirect(),
-    successRedirect: authSuccessRedirect(),
-  }),
+  (req: Request, res: Response, next) =>
+    passport.authenticate("github", {
+      failureRedirect: authFailureRedirect(),
+      successRedirect: authSuccessRedirect(),
+    })(req, res, next),
 );
 
 authRouter.post("/logout", (req: Request, res: Response) => {
@@ -176,7 +198,7 @@ authRouter.post("/logout", (req: Request, res: Response) => {
 });
 
 authRouter.post("/dev-login", async (req: Request, res: Response) => {
-  if (process.env.NODE_ENV === "production") {
+  if (process.env.NODE_ENV === "production" || process.env.ENABLE_DEV_LOGIN !== "true") {
     return res.status(404).json({ error: "Not found" });
   }
 

@@ -11,16 +11,11 @@ import { profileRouter } from "./routes/profile";
 import { planRouter } from "./routes/plan";
 import { createSessionMiddleware } from "./lib/session";
 
-let passportConfigured = false;
-
 export function createApp() {
     const app = express();
     const appOrigin = process.env.APP_ORIGIN || "http://localhost:5173";
 
-    if (!passportConfigured) {
-        configurePassport();
-        passportConfigured = true;
-    }
+    configurePassport();
 
     app.use(
         cors({
@@ -37,11 +32,6 @@ export function createApp() {
     );
     app.use(cookieParser());
     app.use(express.json());
-    app.use(createSessionMiddleware());
-    app.use(passport.initialize());
-    app.use(passport.session());
-
-    app.use("/api/auth", authRouter);
     app.use(
         "/api",
         createRateLimitMiddleware(apiRateLimiter, {
@@ -51,7 +41,11 @@ export function createApp() {
             message: "Too many API requests. Please try again shortly.",
         }),
     );
+    app.use(createSessionMiddleware());
+    app.use(passport.initialize());
+    app.use(passport.session());
 
+    app.use("/api/auth", authRouter);
     app.use("/api/analytics", analyticsRouter);
     app.use("/api/profile", profileRouter);
     app.use("/api/plan", planRouter);
