@@ -56,3 +56,6 @@ server/src/test-ai.ts
 
 # Superpowers brainstorming companion
 .superpowers/
+
+# Local git worktrees
+.worktrees/
