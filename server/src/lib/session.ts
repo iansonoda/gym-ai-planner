@@ -5,7 +5,9 @@ import { pool } from "./prisma";
 const PgSession = connectPgSimple(session);
 
 export function createSessionMiddleware() {
-  const sessionSecret = process.env.SESSION_SECRET;
+  const sessionSecret =
+    process.env.SESSION_SECRET ??
+    (process.env.NODE_ENV === "test" ? "test-session-secret" : undefined);
 
   if (!sessionSecret) {
     throw new Error("SESSION_SECRET is required");
