@@ -2,7 +2,9 @@ import type { NextFunction, Request, Response } from "express";
 import { describe, expect, it } from "vitest";
 import { requireAuth, resolveOptionalAuth } from "./auth";
 
-function response() {
+type MockResponse = Response & { statusCode: number; jsonBody: unknown };
+
+function response(): MockResponse {
   return {
     statusCode: 200,
     jsonBody: undefined as unknown,
@@ -14,13 +16,13 @@ function response() {
       this.jsonBody = payload;
       return this;
     },
-  };
+  } as unknown as MockResponse;
 }
 
 describe("session requireAuth", () => {
   it("rejects requests without a session user", async () => {
     const req = { user: undefined, isAuthenticated: () => false } as unknown as Request;
-    const res = response() as Response & { statusCode: number; jsonBody: unknown };
+    const res = response();
     let nextCalled = false;
 
     await requireAuth(req, res, (() => { nextCalled = true; }) as NextFunction);
@@ -35,7 +37,7 @@ describe("session requireAuth", () => {
       user: { id: "550e8400-e29b-41d4-a716-446655440000", email: "ian@example.com", name: null, avatarUrl: null },
       isAuthenticated: () => true,
     } as unknown as Request;
-    const res = response() as Response;
+    const res = response();
     let nextCalled = false;
 
     await requireAuth(req, res, (() => { nextCalled = true; }) as NextFunction);
