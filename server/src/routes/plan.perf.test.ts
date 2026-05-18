@@ -3,12 +3,14 @@ import { performanceTargets } from "../../../test/fixtures/scenarios";
 import { invokeExpressRoute } from "../../../test/helpers/express-test-utils";
 import {
     createAuthenticatedHeaders,
+    createAuthenticatedSessionUser,
     createGeneratedPlanFixture,
     profileFixtures,
     TEST_USER_ID,
 } from "../../../test/helpers/server-test-utils";
 
 vi.mock("../lib/prisma", () => ({
+    pool: {},
     prisma: {
         user_profiles: {
             findUnique: vi.fn(),
@@ -33,21 +35,19 @@ vi.mock("../lib/auth", async () => {
     return {
         ...actual,
         requireAuth: vi.fn(async (req, res, next) => {
-            if (!req.header("authorization")) {
+            if (!req.header("x-test-auth")) {
                 return res.status(401).json({ error: "Authentication required" });
             }
 
             req.auth = {
-                payload: { sub: TEST_USER_ID },
-                token: "test-token",
+                user: createAuthenticatedSessionUser(),
                 userId: TEST_USER_ID,
             };
 
             return next();
         }),
         resolveOptionalAuth: vi.fn(async () => ({
-            payload: { sub: TEST_USER_ID },
-            token: "test-token",
+            user: createAuthenticatedSessionUser(),
             userId: TEST_USER_ID,
         })),
     };
