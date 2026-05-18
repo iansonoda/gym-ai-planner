@@ -6,8 +6,6 @@ import Account from "./pages/Account"
 import Onboarding from "./pages/Onboarding"
 import Profile from "./pages/Profile"
 import Navbar from "./components/layout/Navbar"
-import { NeonAuthUIProvider } from '@neondatabase/neon-js/auth/react';
-import { authClient } from "./lib/auth";
 import AuthProvider from "./context/AuthContext";
 import { trackEvent } from "./lib/analytics";
 
@@ -57,8 +55,7 @@ function App() {
   }, []);
 
   return (
-    <NeonAuthUIProvider authClient={authClient} defaultTheme="dark">
-      <AuthProvider>
+    <AuthProvider>
       <BrowserRouter>
         <div className="min-h-screen flex flex-col">
           <RouteMetadata />
@@ -74,8 +71,7 @@ function App() {
           </main>
         </div>
       </BrowserRouter>
-      </AuthProvider>
-    </NeonAuthUIProvider>
+    </AuthProvider>
   )
 }
 
