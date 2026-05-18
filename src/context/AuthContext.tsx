@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { User, ProfileInput, RegeneratePlanInput, TrainingPlan } from "../types";
-import { authClient } from "@/lib/auth";
+import { devLogin as createDevSession, getCurrentUser, signOut as destroySession } from "@/lib/auth";
 import { trackEvent } from "@/lib/analytics";
 import { api } from "@/lib/api";
 import { AuthContext } from "./auth-context";
@@ -11,25 +11,6 @@ interface PlanResponse {
     planJson: TrainingPlan;
     version: string;
     createdAt: string;
-}
-
-interface SessionUserLike {
-    id: string;
-    email: string;
-    createdAt?: Date | string;
-}
-
-function mapUser(user: SessionUserLike): User {
-    return {
-        id: user.id,
-        email: user.email,
-        createdAt:
-            user.createdAt instanceof Date
-                ? user.createdAt.toISOString()
-                : typeof user.createdAt === "string"
-                  ? user.createdAt
-                  : "",
-    };
 }
 
 function mapPlan(planData: PlanResponse): TrainingPlan {
@@ -45,34 +26,30 @@ function mapPlan(planData: PlanResponse): TrainingPlan {
 }
 
 export default function AuthProvider({ children }: { children: React.ReactNode }) {
-    const [neonUser, setNeonUser] = useState<User | null>(null);
+    const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [plan, setPlan] = useState<TrainingPlan | null>(null);
     const isRefreshingRef = useRef(false);
-    const userId = neonUser?.id ?? null;
+    const userId = user?.id ?? null;
 
     useEffect(() => {
         async function loadUser() {
             try {
-                const result = await authClient.getSession();
-                const sessionData = result?.data;
-                const rawUser = sessionData && "user" in sessionData ? sessionData.user : null;
+                const currentUser = await getCurrentUser();
 
-                if (rawUser && typeof rawUser.id === "string" && typeof rawUser.email === "string") {
-                    const user = mapUser(rawUser);
-                    setNeonUser(user);
-
+                if (currentUser) {
+                    setUser(currentUser);
                     const planData = await api.getCurrentPlan().catch(() => null);
                     if (planData) {
                         setPlan(mapPlan(planData as PlanResponse));
                     }
                 } else {
-                    setNeonUser(null);
+                    setUser(null);
                     setPlan(null);
                 }
             } catch (error) {
                 console.error(error);
-                setNeonUser(null);
+                setUser(null);
                 setPlan(null);
             } finally {
                 setIsLoading(false);
@@ -104,6 +81,19 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
             isRefreshingRef.current = false;
         }
     }, [userId])
+
+    const signOut = useCallback(async () => {
+        await destroySession();
+        setUser(null);
+        setPlan(null);
+    }, []);
+
+    const devLogin = useCallback(async () => {
+        const devUser = await createDevSession();
+        setUser(devUser);
+        const planData = await api.getCurrentPlan().catch(() => null);
+        setPlan(planData ? mapPlan(planData as PlanResponse) : null);
+    }, []);
 
     async function saveProfile(profileData: ProfileInput) {
         if (!userId) {
@@ -162,14 +152,16 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     }
 
     return (
-        <AuthContext.Provider 
+        <AuthContext.Provider
             value={{
-                user: neonUser, 
-                plan, 
-                isLoading, 
-                saveProfile, 
-                generatePlan, 
-                refreshData
+                user,
+                plan,
+                isLoading,
+                saveProfile,
+                generatePlan,
+                refreshData,
+                signOut,
+                devLogin,
             }}
         >
             {children}

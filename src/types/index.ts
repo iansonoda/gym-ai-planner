@@ -11,7 +11,10 @@ import type {
 export interface User {
     id: string;
     email: string;
-    createdAt: string;
+    name?: string | null;
+    avatarUrl?: string | null;
+    providers?: string[];
+    createdAt?: string;
 }
 
 export type UserProfile = UserProfileCore & {
