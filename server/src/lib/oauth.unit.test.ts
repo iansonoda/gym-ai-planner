@@ -48,6 +48,24 @@ describe("findOrCreateOAuthUser", () => {
     expect(mockedPrisma.users.create).not.toHaveBeenCalled();
   });
 
+  it("reuses an existing provider account without requiring a verified email", async () => {
+    mockedPrisma.oauth_accounts.findUnique.mockResolvedValue({
+      user: { id: "user-1", email: "ian@example.com", name: "Ian", avatar_url: null, oauth_accounts: [] },
+    });
+
+    const result = await findOrCreateOAuthUser({
+      provider: "google",
+      providerAccountId: "google-123",
+      email: null,
+      emailVerified: false,
+      name: null,
+      avatarUrl: null,
+    });
+
+    expect(result.id).toBe("user-1");
+    expect(mockedPrisma.users.findUnique).not.toHaveBeenCalled();
+  });
+
   it("links a new provider to an existing verified email", async () => {
     mockedPrisma.oauth_accounts.findUnique.mockResolvedValue(null);
     mockedPrisma.users.findUnique.mockResolvedValue({
@@ -106,6 +124,70 @@ describe("findOrCreateOAuthUser", () => {
         avatar_url: null,
       },
     });
+  });
+
+  it("recovers from duplicate user email creation by linking the existing user", async () => {
+    const uniqueConflict = Object.assign(new Error("Unique constraint failed"), { code: "P2002" });
+
+    mockedPrisma.oauth_accounts.findUnique.mockResolvedValue(null);
+    mockedPrisma.users.findUnique
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({
+        id: "user-1",
+        email: "ian@example.com",
+        name: "Ian",
+        avatar_url: null,
+      });
+    mockedPrisma.users.create.mockRejectedValue(uniqueConflict);
+    mockedPrisma.oauth_accounts.create.mockResolvedValue({});
+
+    const result = await findOrCreateOAuthUser({
+      provider: "google",
+      providerAccountId: "google-456",
+      email: "ian@example.com",
+      emailVerified: true,
+      name: "Ian",
+      avatarUrl: null,
+    });
+
+    expect(result.id).toBe("user-1");
+    expect(mockedPrisma.oauth_accounts.create).toHaveBeenCalledWith({
+      data: {
+        provider: "google",
+        provider_account_id: "google-456",
+        email: "ian@example.com",
+        user_id: "user-1",
+      },
+    });
+  });
+
+  it("recovers from duplicate oauth account creation by returning the linked user", async () => {
+    const uniqueConflict = Object.assign(new Error("Unique constraint failed"), { code: "P2002" });
+
+    mockedPrisma.oauth_accounts.findUnique
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({
+        user: { id: "user-1", email: "ian@example.com", name: "Ian", avatar_url: null, oauth_accounts: [] },
+      });
+    mockedPrisma.users.findUnique.mockResolvedValue({
+      id: "user-1",
+      email: "ian@example.com",
+      name: "Ian",
+      avatar_url: null,
+    });
+    mockedPrisma.oauth_accounts.create.mockRejectedValue(uniqueConflict);
+
+    const result = await findOrCreateOAuthUser({
+      provider: "github",
+      providerAccountId: "gh-123",
+      email: "ian@example.com",
+      emailVerified: true,
+      name: "Ian",
+      avatarUrl: null,
+    });
+
+    expect(result.id).toBe("user-1");
+    expect(mockedPrisma.oauth_accounts.findUnique).toHaveBeenCalledTimes(2);
   });
 
   it("rejects unverified provider emails", async () => {
