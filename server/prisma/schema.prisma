@@ -41,6 +41,14 @@ model oauth_accounts {
   @@index([user_id], map: "idx_oauth_accounts_user_id")
 }
 
+model user_sessions {
+  sid String @id @db.VarChar
+  sess Json @db.Json
+  expire DateTime @db.Timestamp(6)
+
+  @@index([expire], map: "idx_user_sessions_expire")
+}
+
 model user_profiles {
   user_id String @id @db.Uuid
   goal String @db.VarChar(20)
