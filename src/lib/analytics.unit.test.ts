@@ -2,11 +2,6 @@
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("./auth", () => ({
-    getAuthToken: vi.fn(),
-}));
-
-import { getAuthToken } from "./auth";
 import { getAnalyticsSessionId, trackEvent } from "./analytics";
 
 describe("client analytics", () => {
@@ -14,7 +9,6 @@ describe("client analytics", () => {
         vi.clearAllMocks();
         window.localStorage.clear();
         vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true }));
-        vi.mocked(getAuthToken).mockResolvedValue("token-123");
     });
 
     it("persists a stable session id in local storage", () => {
@@ -42,10 +36,10 @@ describe("client analytics", () => {
             "http://localhost:3001/api/analytics/events",
             expect.objectContaining({
                 method: "POST",
-                headers: expect.objectContaining({
-                    Authorization: "Bearer token-123",
+                credentials: "include",
+                headers: {
                     "Content-Type": "application/json",
-                }),
+                },
                 keepalive: true,
             }),
         );

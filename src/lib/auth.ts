@@ -1,16 +1,50 @@
-import { createAuthClient } from '@neondatabase/neon-js/auth';
+import type { User } from "@/types";
 
-export const authClient = createAuthClient(
-    import.meta.env.VITE_NEON_AUTH_URL
-);
+const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
-export async function getAuthToken() {
-    const sessionResult = await authClient.getSession();
-    const sessionData = sessionResult?.data;
+async function readError(res: Response, fallback: string) {
+    const data = await res.json().catch(() => ({}));
+    return data.error || fallback;
+}
 
-    if (sessionData && "session" in sessionData && sessionData.session?.token) {
-        return sessionData.session.token;
+export async function getCurrentUser(): Promise<User | null> {
+    const res = await fetch(`${BASE_URL}/api/auth/me`, {
+        credentials: "include",
+    });
+
+    if (res.status === 401) {
+        return null;
     }
 
-    return null;
+    if (!res.ok) {
+        throw new Error(await readError(res, "Failed to load user"));
+    }
+
+    const data = await res.json();
+    return data.user;
+}
+
+export async function signOut() {
+    const res = await fetch(`${BASE_URL}/api/auth/logout`, {
+        method: "POST",
+        credentials: "include",
+    });
+
+    if (!res.ok) {
+        throw new Error(await readError(res, "Failed to sign out"));
+    }
+}
+
+export async function devLogin(): Promise<User> {
+    const res = await fetch(`${BASE_URL}/api/auth/dev-login`, {
+        method: "POST",
+        credentials: "include",
+    });
+
+    if (!res.ok) {
+        throw new Error(await readError(res, "Failed to create dev session"));
+    }
+
+    const data = await res.json();
+    return data.user;
 }
