@@ -12,6 +12,35 @@ datasource db {
   provider = "postgresql"
 }
 
+model users {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email String @unique @db.VarChar(255)
+  name String? @db.VarChar(255)
+  avatar_url String? @db.Text
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @default(now()) @db.Timestamptz(6)
+
+  oauth_accounts oauth_accounts[]
+  user_profile user_profiles?
+  training_plans training_plans[]
+  analytics_events analytics_events[]
+}
+
+model oauth_accounts {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id String @db.Uuid
+  provider String @db.VarChar(40)
+  provider_account_id String @db.VarChar(255)
+  email String @db.VarChar(255)
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+
+  user users @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([provider, provider_account_id], map: "oauth_accounts_provider_provider_account_id_key")
+  @@index([email], map: "idx_oauth_accounts_email")
+  @@index([user_id], map: "idx_oauth_accounts_user_id")
+}
+
 model user_profiles {
   user_id String @id @db.Uuid
   goal String @db.VarChar(20)
@@ -23,6 +52,8 @@ model user_profiles {
   general_notes String? @db.Text
   preferred_split String @db.VarChar(20)
   updated_at DateTime @default(now()) @db.Timestamptz(6)
+
+  user users @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
 
 model training_plans {
@@ -32,6 +63,9 @@ model training_plans {
   plan_text String
   version Int @default(1)
   created_at DateTime @default(now()) @db.Timestamptz(6)
+
+  user users @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
   @@index([user_id], map: "idx_training_plans_user_id")
 }
 
@@ -44,6 +78,8 @@ model analytics_events {
   path String? @db.VarChar(500)
   properties Json?
   created_at DateTime @default(now()) @db.Timestamptz(6)
+
+  user users? @relation(fields: [user_id], references: [id], onDelete: SetNull)
 
   @@index([event_name], map: "idx_analytics_events_event_name")
   @@index([user_id], map: "idx_analytics_events_user_id")
