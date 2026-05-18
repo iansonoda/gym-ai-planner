@@ -1,3 +1,4 @@
+import { Prisma } from "../../generated/prisma/client";
 import { prisma } from "./prisma";
 
 export type OAuthProvider = "google" | "github";
@@ -32,14 +33,14 @@ function mapUser(user: { id: string; email: string; name: string | null; avatar_
   };
 }
 
-export async function findOrCreateOAuthUser(input: OAuthProfileInput): Promise<AppUser> {
-  if (!input.email || !input.emailVerified) {
-    throw new Error("A verified email is required to sign in.");
-  }
+function isUniqueConflict(error: unknown) {
+  return error instanceof Prisma.PrismaClientKnownRequestError
+    ? error.code === "P2002"
+    : typeof error === "object" && error !== null && "code" in error && error.code === "P2002";
+}
 
-  const email = normalizeEmail(input.email);
-
-  const existingAccount = await prisma.oauth_accounts.findUnique({
+function findProviderAccount(input: OAuthProfileInput) {
+  return prisma.oauth_accounts.findUnique({
     where: {
       provider_provider_account_id: {
         provider: input.provider,
@@ -48,21 +49,42 @@ export async function findOrCreateOAuthUser(input: OAuthProfileInput): Promise<A
     },
     include: { user: true },
   });
+}
+
+export async function findOrCreateOAuthUser(input: OAuthProfileInput): Promise<AppUser> {
+  const existingAccount = await findProviderAccount(input);
 
   if (existingAccount?.user) {
     return mapUser(existingAccount.user);
   }
 
+  if (!input.email || !input.emailVerified) {
+    throw new Error("A verified email is required to sign in.");
+  }
+
+  const email = normalizeEmail(input.email);
+
   let user = await prisma.users.findUnique({ where: { email } });
 
   if (!user) {
-    user = await prisma.users.create({
-      data: {
-        email,
-        name: input.name,
-        avatar_url: input.avatarUrl,
-      },
-    });
+    try {
+      user = await prisma.users.create({
+        data: {
+          email,
+          name: input.name,
+          avatar_url: input.avatarUrl,
+        },
+      });
+    } catch (error) {
+      if (!isUniqueConflict(error)) {
+        throw error;
+      }
+
+      user = await prisma.users.findUnique({ where: { email } });
+      if (!user) {
+        throw error;
+      }
+    }
   } else if ((!user.name && input.name) || (!user.avatar_url && input.avatarUrl)) {
     user = await prisma.users.update({
       where: { id: user.id },
@@ -74,14 +96,27 @@ export async function findOrCreateOAuthUser(input: OAuthProfileInput): Promise<A
     }) ?? user;
   }
 
-  await prisma.oauth_accounts.create({
-    data: {
-      user_id: user.id,
-      provider: input.provider,
-      provider_account_id: input.providerAccountId,
-      email,
-    },
-  });
+  try {
+    await prisma.oauth_accounts.create({
+      data: {
+        user_id: user.id,
+        provider: input.provider,
+        provider_account_id: input.providerAccountId,
+        email,
+      },
+    });
+  } catch (error) {
+    if (!isUniqueConflict(error)) {
+      throw error;
+    }
+
+    const linkedAccount = await findProviderAccount(input);
+    if (linkedAccount?.user) {
+      return mapUser(linkedAccount.user);
+    }
+
+    throw error;
+  }
 
   return mapUser(user);
 }
