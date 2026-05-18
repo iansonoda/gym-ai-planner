@@ -1,18 +1,31 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import passport from "passport";
 import { analyticsRouter } from "./routes/analytics";
+import { authRouter, configurePassport } from "./routes/auth";
 import { apiRateLimiter } from "./lib/server-runtime";
 import { createRateLimitMiddleware } from "./lib/rate-limit";
 import { getRequestIp } from "./lib/request";
 import { profileRouter } from "./routes/profile";
 import { planRouter } from "./routes/plan";
+import { createSessionMiddleware } from "./lib/session";
+
+let passportConfigured = false;
 
 export function createApp() {
     const app = express();
+    const appOrigin = process.env.APP_ORIGIN || "http://localhost:5173";
+
+    if (!passportConfigured) {
+        configurePassport();
+        passportConfigured = true;
+    }
 
     app.use(
         cors({
+            origin: appOrigin,
+            credentials: true,
             exposedHeaders: [
                 "X-Cache",
                 "X-RateLimit-Limit",
@@ -24,6 +37,11 @@ export function createApp() {
     );
     app.use(cookieParser());
     app.use(express.json());
+    app.use(createSessionMiddleware());
+    app.use(passport.initialize());
+    app.use(passport.session());
+
+    app.use("/api/auth", authRouter);
     app.use(
         "/api",
         createRateLimitMiddleware(apiRateLimiter, {
