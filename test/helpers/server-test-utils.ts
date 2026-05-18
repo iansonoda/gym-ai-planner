@@ -1,10 +1,19 @@
 import type { RegeneratePlanMode, UserProfile } from "../../server/types";
 
-export const TEST_USER_ID = "user_123";
+export const TEST_USER_ID = "550e8400-e29b-41d4-a716-446655440000";
 
-export function createAuthenticatedHeaders(token = "test-token") {
+export function createAuthenticatedSessionUser() {
     return {
-        Authorization: `Bearer ${token}`,
+        id: TEST_USER_ID,
+        email: "test@example.com",
+        name: "Test User",
+        avatarUrl: null,
+    };
+}
+
+export function createAuthenticatedHeaders() {
+    return {
+        "x-test-auth": TEST_USER_ID,
     };
 }
 
