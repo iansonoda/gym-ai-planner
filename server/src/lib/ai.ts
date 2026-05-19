@@ -54,7 +54,7 @@ export async function generateTrainingPlan(
     try {
         // Call OpenRouter API
         const completion = await openai.chat.completions.create({
-            model: "arcee-ai/trinity-large-preview:free",
+            model: "baidu/cobuddy:free",
             messages: [
                 {
                     role: "system",
