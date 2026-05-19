@@ -52,6 +52,21 @@ function hasOAuthEnv(provider: "google" | "github") {
   );
 }
 
+function requireOAuthProvider(provider: "google" | "github") {
+  return (_req: Request, res: Response, next: () => void) => {
+    if (hasOAuthEnv(provider)) {
+      next();
+      return;
+    }
+
+    const label = provider === "google" ? "Google" : "GitHub";
+    const prefix = provider.toUpperCase();
+    res.status(503).json({
+      error: `${label} OAuth is not configured. Set ${prefix}_CLIENT_ID and ${prefix}_CLIENT_SECRET.`,
+    });
+  };
+}
+
 export function configurePassport() {
   if (!sessionSerializationConfigured) {
     passport.serializeUser((user, done) => {
@@ -160,9 +175,14 @@ authRouter.get("/me", async (req: Request, res: Response) => {
   });
 });
 
-authRouter.get("/google", passport.authenticate("google", { scope: ["profile", "email"] }));
+authRouter.get(
+  "/google",
+  requireOAuthProvider("google"),
+  passport.authenticate("google", { scope: ["profile", "email"] }),
+);
 authRouter.get(
   "/google/callback",
+  requireOAuthProvider("google"),
   (req: Request, res: Response, next) =>
     passport.authenticate("google", {
       failureRedirect: authFailureRedirect(),
@@ -170,9 +190,14 @@ authRouter.get(
     })(req, res, next),
 );
 
-authRouter.get("/github", passport.authenticate("github", { scope: ["user:email"] }));
+authRouter.get(
+  "/github",
+  requireOAuthProvider("github"),
+  passport.authenticate("github", { scope: ["user:email"] }),
+);
 authRouter.get(
   "/github/callback",
+  requireOAuthProvider("github"),
   (req: Request, res: Response, next) =>
     passport.authenticate("github", {
       failureRedirect: authFailureRedirect(),

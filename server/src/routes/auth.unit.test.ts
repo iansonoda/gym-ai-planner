@@ -161,6 +161,38 @@ describe("auth routes", () => {
     expect(() => createApp()).not.toThrow();
   });
 
+  it("returns a setup error when Google OAuth credentials are not configured", async () => {
+    delete process.env.GOOGLE_CLIENT_ID;
+    delete process.env.GOOGLE_CLIENT_SECRET;
+    const app = createApp();
+
+    const res = await invokeExpressRoute(app, {
+      method: "GET",
+      url: "/api/auth/google",
+    });
+
+    expect(res.status).toBe(503);
+    expect(res.body).toEqual({
+      error: "Google OAuth is not configured. Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET.",
+    });
+  });
+
+  it("returns a setup error when GitHub OAuth credentials are not configured", async () => {
+    delete process.env.GITHUB_CLIENT_ID;
+    delete process.env.GITHUB_CLIENT_SECRET;
+    const app = createApp();
+
+    const res = await invokeExpressRoute(app, {
+      method: "GET",
+      url: "/api/auth/github",
+    });
+
+    expect(res.status).toBe(503);
+    expect(res.body).toEqual({
+      error: "GitHub OAuth is not configured. Set GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET.",
+    });
+  });
+
   it("requires an explicit development opt-in for dev login", async () => {
     process.env.NODE_ENV = "development";
     const app = createApp();
