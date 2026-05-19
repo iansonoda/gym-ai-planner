@@ -59,3 +59,6 @@ server/src/test-ai.ts
 
 # Local git worktrees
 .worktrees/
+
+INTERVIEW_PROJECT_GUIDE.md
+plan.md
