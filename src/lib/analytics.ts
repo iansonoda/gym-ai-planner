@@ -1,5 +1,3 @@
-import { getAuthToken } from "./auth";
-
 const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 const SESSION_STORAGE_KEY = "gymai.analytics.session-id";
 
@@ -33,18 +31,12 @@ export function getAnalyticsSessionId() {
 }
 
 async function postAnalyticsEvent(payload: ClientAnalyticsEvent) {
-    const headers: Record<string, string> = {
-        "Content-Type": "application/json",
-    };
-
-    const token = await getAuthToken().catch(() => null);
-    if (token) {
-        headers.Authorization = `Bearer ${token}`;
-    }
-
     await fetch(`${BASE_URL}/api/analytics/events`, {
         method: "POST",
-        headers,
+        credentials: "include",
+        headers: {
+            "Content-Type": "application/json",
+        },
         body: JSON.stringify({
             ...payload,
             sessionId: getAnalyticsSessionId(),

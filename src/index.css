@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@import "@neondatabase/neon-js/ui/tailwind";
 
 @theme {
   --font-sans: "Geist", system-ui, sans-serif;
@@ -55,50 +54,8 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Overriding better auth skeleton colors */
   [data-slot="skeleton"],
   .animate-pulse {
     background-color: var(--color-border) !important;
-  }
-
-  .neon-auth-shell,
-  .neon-auth-shell [data-radix-popper-content-wrapper],
-  .neon-auth-shell [role="dialog"] {
-    color-scheme: dark;
-  }
-
-  .neon-auth-shell :where(.bg-background) {
-    background-color: var(--color-background) !important;
-  }
-
-  .neon-auth-shell :where(.bg-card, .bg-sidebar) {
-    background-color: var(--color-card) !important;
-  }
-
-  .neon-auth-shell :where(.bg-popover) {
-    background-color: var(--color-popover) !important;
-  }
-
-  .neon-auth-shell :where(.text-foreground, .text-card-foreground, .text-popover-foreground) {
-    color: var(--color-foreground) !important;
-  }
-
-  .neon-auth-shell :where(.text-muted-foreground) {
-    color: var(--color-muted) !important;
-  }
-
-  .neon-auth-shell :where(.border, .border-input, .border-border) {
-    border-color: var(--color-border) !important;
-  }
-
-  .neon-auth-shell :where(input, textarea, select, [role="menu"], [role="dialog"]) {
-    background-color: var(--color-card-2);
-    color: var(--color-foreground);
-    border-color: var(--color-border);
-  }
-
-  .neon-auth-shell :where(button):focus-visible,
-  .neon-auth-shell :where(input, textarea, select):focus-visible {
-    box-shadow: 0 0 0 3px var(--color-ring) !important;
   }
 }

@@ -1,58 +1,55 @@
 import type { NextFunction, Request, Response } from "express";
 import { describe, expect, it } from "vitest";
-import { requireAuth, resolveJwksUrl } from "./auth";
+import { requireAuth, resolveOptionalAuth } from "./auth";
 
-function createMockResponse() {
-    return {
-        statusCode: 200,
-        jsonBody: undefined as unknown,
-        status(code: number) {
-            this.statusCode = code;
-            return this;
-        },
-        json(payload: unknown) {
-            this.jsonBody = payload;
-            return this;
-        },
-    };
+type MockResponse = Response & { statusCode: number; jsonBody: unknown };
+
+function response(): MockResponse {
+  return {
+    statusCode: 200,
+    jsonBody: undefined as unknown,
+    status(code: number) {
+      this.statusCode = code;
+      return this;
+    },
+    json(payload: unknown) {
+      this.jsonBody = payload;
+      return this;
+    },
+  } as unknown as MockResponse;
 }
 
-describe("requireAuth", () => {
-    it("rejects requests without an authorization header", async () => {
-        const req = {
-            header: () => undefined,
-        } as Pick<Request, "header"> as Request;
-        const res = createMockResponse() as Response & {
-            statusCode: number;
-            jsonBody: unknown;
-        };
-        let nextCalled = false;
+describe("session requireAuth", () => {
+  it("rejects requests without a session user", async () => {
+    const req = { user: undefined, isAuthenticated: () => false } as unknown as Request;
+    const res = response();
+    let nextCalled = false;
 
-        const next: NextFunction = () => {
-            nextCalled = true;
-        };
+    await requireAuth(req, res, (() => { nextCalled = true; }) as NextFunction);
 
-        await requireAuth(req, res, next);
+    expect(nextCalled).toBe(false);
+    expect(res.statusCode).toBe(401);
+    expect(res.jsonBody).toEqual({ error: "Authentication required" });
+  });
 
-        expect(nextCalled).toBe(false);
-        expect(res.statusCode).toBe(401);
-        expect(res.jsonBody).toEqual({ error: "Authentication required" });
-    });
+  it("attaches authenticated session context", async () => {
+    const req = {
+      user: { id: "550e8400-e29b-41d4-a716-446655440000", email: "ian@example.com", name: null, avatarUrl: null },
+      isAuthenticated: () => true,
+    } as unknown as Request;
+    const res = response();
+    let nextCalled = false;
+
+    await requireAuth(req, res, (() => { nextCalled = true; }) as NextFunction);
+
+    expect(nextCalled).toBe(true);
+    expect((req as any).auth.userId).toBe("550e8400-e29b-41d4-a716-446655440000");
+  });
 });
 
-describe("resolveJwksUrl", () => {
-    it("uses Neon well-known JWKS path", () => {
-        const jwksUrl = resolveJwksUrl("https://example.neon.tech/neondb/auth");
-
-        expect(jwksUrl?.toString()).toBe("https://example.neon.tech/neondb/auth/.well-known/jwks.json");
-    });
-
-    it("preserves an explicit JWKS override", () => {
-        const jwksUrl = resolveJwksUrl(
-            "https://example.neon.tech/neondb/auth",
-            "https://auth.example.com/custom/jwks.json",
-        );
-
-        expect(jwksUrl?.toString()).toBe("https://auth.example.com/custom/jwks.json");
-    });
+describe("resolveOptionalAuth", () => {
+  it("returns null when the request is anonymous", async () => {
+    const req = { user: undefined, isAuthenticated: () => false } as unknown as Request;
+    await expect(resolveOptionalAuth(req)).resolves.toBeNull();
+  });
 });

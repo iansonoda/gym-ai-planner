@@ -1,26 +1,13 @@
-import type { ProfileInput, RegeneratePlanInput, UserProfile } from "../types"
-import { getAuthToken } from "./auth";
+import type { ProfileInput, RegeneratePlanInput, UserProfile } from "../types";
 
 const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
-async function getAuthHeaders() {
-    const token = await getAuthToken();
-    const headers: Record<string, string> = {};
-
-    if (token) {
-        headers.Authorization = `Bearer ${token}`;
-    }
-
-    return headers;
-}
-
 async function post(path: string, body: object) {
-    const authHeaders = await getAuthHeaders();
     const res = await fetch(`${BASE_URL}/api${path}`, {
         method: "POST",
+        credentials: "include",
         headers: {
             "Content-Type": "application/json",
-            ...authHeaders,
         },
         body: JSON.stringify(body),
     });
@@ -31,12 +18,11 @@ async function post(path: string, body: object) {
         );
     }
     return res.json();
-};
+}
 
 async function get(path: string) {
-    const authHeaders = await getAuthHeaders();
     const res = await fetch(`${BASE_URL}/api${path}`, {
-        headers: authHeaders,
+        credentials: "include",
     });
     if (!res.ok) {
         throw new Error(
@@ -44,12 +30,11 @@ async function get(path: string) {
         );
     }
     return res.json();
-
-};
+}
 
 export const api = {
     saveProfile: (profile: ProfileInput) => {
-        return post("/profile", profile)
+        return post("/profile", profile);
     },
     getProfile: (): Promise<UserProfile> => get("/profile"),
     generatePlan: (input?: RegeneratePlanInput) => post("/plan/generate", input ?? {}),

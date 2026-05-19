@@ -26,7 +26,7 @@ GymAI is a full-stack web application that generates personalized workout plans 
 - Frontend: React 19, Vite, TypeScript, Tailwind CSS 4
 - Backend: Node.js, Express, TypeScript
 - Database: PostgreSQL with Prisma
-- Auth: Neon Auth
+- Auth: Express sessions with Passport.js, Google OAuth, and GitHub OAuth
 - AI: OpenRouter
 
 ## Local Setup
@@ -47,27 +47,33 @@ npm install
 cd ..
 ```
 
-3. Create `server/.env`:
-
-```env
-DATABASE_URL="postgresql://user:password@host/dbname?sslmode=require"
-OPEN_ROUTER_KEY="your-openrouter-key"
-PORT=3001
-```
-
-4. Create `.env` in the project root:
+3. Create `.env` in the project root:
 
 ```env
 VITE_API_URL="http://localhost:3001"
 ```
 
-5. Initialize the database:
+4. Create `server/.env`:
+
+```env
+DATABASE_URL="postgresql://gymai:gymai@localhost:5432/gymai"
+SESSION_SECRET="replace-with-a-long-random-string"
+APP_ORIGIN="http://localhost:5173"
+API_BASE_URL="http://localhost:3001"
+GOOGLE_CLIENT_ID="your-google-client-id"
+GOOGLE_CLIENT_SECRET="your-google-client-secret"
+GITHUB_CLIENT_ID="your-github-client-id"
+GITHUB_CLIENT_SECRET="your-github-client-secret"
+OPEN_ROUTER_KEY="your-openrouter-key"
+PORT=3001
+```
+
+5. Start local Postgres and apply Prisma migrations:
 
 ```bash
-cd server
-npx prisma generate
-npx prisma db push
-cd ..
+docker compose up -d postgres
+npm run db:generate --prefix server
+npm run db:migrate --prefix server
 ```
 
 6. Start the app:
@@ -83,6 +89,8 @@ npm run dev
 ```
 
 The frontend runs through Vite and the backend serves the API used for profile storage and plan generation.
+
+In development, the sign-in page includes a dev login button that creates a local session without Google or GitHub credentials. It is disabled when `NODE_ENV=production`.
 
 ## Testing
 
