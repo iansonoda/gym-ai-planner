@@ -68,7 +68,21 @@ OPEN_ROUTER_KEY="your-openrouter-key"
 PORT=3001
 ```
 
-5. Start local Postgres and apply Prisma migrations:
+5. Start the app:
+
+```bash
+npm run start:app
+```
+
+This starts Docker Postgres, runs Prisma setup, starts the backend, and starts Vite. Use `Ctrl+C` to stop both dev servers.
+
+If you already ran setup and only want the dev servers:
+
+```bash
+npm run start:app -- --skip-setup
+```
+
+Manual setup is also available:
 
 ```bash
 docker compose up -d postgres
@@ -76,7 +90,7 @@ npm run db:generate --prefix server
 npm run db:migrate --prefix server
 ```
 
-6. Start the app:
+6. Manual server start:
 
 ```bash
 cd server
